@@ -1,0 +1,29 @@
+import torch
+import numpy as np
+
+
+def confidence_interval(standard_deviation, n_samples):
+    """
+    Computes statistical 95% confidence interval of the results from standard deviation and number of samples
+    Args:
+        standard_deviation (float): standard deviation of the results
+        n_samples (int): number of samples
+
+    Returns:
+        float: confidence interval
+    """
+    return 1.96 * standard_deviation / np.sqrt(n_samples)
+
+
+def euclidean_dist(x, y):
+    # x: N x D
+    # y: M x D
+    n = x.size(0)
+    m = y.size(0)
+    d = x.size(1)
+    assert d == y.size(1)
+
+    x = x.unsqueeze(1).expand(n, m, d)
+    y = y.unsqueeze(0).expand(n, m, d)
+
+    return torch.pow(x - y, 2).sum(2)
