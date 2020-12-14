@@ -153,7 +153,7 @@ class AbstractMetaLearner(nn.Module):
         acc_mean = np.mean(acc_all)
         acc_std = np.std(acc_all)
         logger.info(
-            "%d Test Acc = %4.2f%% +- %4.2f%%"
+            "%d Test Accuracy = %4.2f%% +- %4.2f%%"
             % (n_tasks, acc_mean, confidence_interval(acc_std, n_tasks))
         )
 

@@ -2,6 +2,7 @@ from distutils.dir_util import copy_tree
 from shutil import rmtree
 
 from loguru import logger
+import torch
 from torch.utils.data import DataLoader
 
 from configs import (
@@ -48,6 +49,10 @@ def train_model():
     model = set_device(model_config.MODEL(model_config.BACKBONE))
     optimizer = training_config.OPTIMIZER(model.parameters())
 
+    max_acc = -1.0
+    best_model_epoch = -1
+    best_model_state = None
+
     logger.info("Model and data are ready. Starting training...")
     for epoch in range(training_config.N_EPOCHS):
         # Set model to training mode
@@ -59,7 +64,18 @@ def train_model():
         # Evaluate on validation set
         _, acc, _ = model.eval_loop(val_loader)
 
+        # We make sure the best model is saved on disk, in case the training breaks
+        if acc > max_acc:
+            max_acc = acc
+            best_model_epoch = epoch
+            best_model_state = model.state_dict()
+            torch.save(best_model_state, experiment_config.SAVE_DIR / "best_model.tar")
+
     logger.info(f"Training over after {training_config.N_EPOCHS} epochs")
+    logger.info("Retrieving model with best validation accuracy...")
+    model.load_state_dict(best_model_state)
+    logger.info(f"Retrieved model from epoch {best_model_epoch}")
+
     return model
 
 
