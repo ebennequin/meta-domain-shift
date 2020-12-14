@@ -44,6 +44,7 @@ class CIFAR100CMeta(CIFAR100):
 
         # We need to write this import here (and not at the top) to avoid cyclic imports
         from configs.dataset_config import SPECS_ROOT
+
         with open(SPECS_ROOT / f"{split}.json", "r") as file:
             self.split_specs = json.load(file)
 
