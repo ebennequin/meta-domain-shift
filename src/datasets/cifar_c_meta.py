@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import os
 from pathlib import Path
@@ -6,10 +7,7 @@ import pickle
 from typing import Any, Callable, Optional
 
 import numpy as np
-import torch
-from torch.utils.data import Sampler
 from torchvision.datasets import CIFAR10, CIFAR100
-import torchvision.transforms as transforms
 
 from src.datasets.perturbations import PERTURBATIONS
 from src.datasets.transform import TransformLoader
@@ -44,7 +42,9 @@ class CIFAR100CMeta(CIFAR100):
 
         self._load_meta()
 
-        with open(os.path.join(root, self.base_folder, f"{split}.json"), "r") as file:
+        # We need to write this import here (and not at the top) to avoid cyclic imports
+        from configs.dataset_config import SPECS_ROOT
+        with open(SPECS_ROOT / f"{split}.json", "r") as file:
             self.split_specs = json.load(file)
 
         split_class_idx = {
@@ -73,10 +73,12 @@ class CIFAR100CMeta(CIFAR100):
         self.data = np.vstack(self.data).reshape(-1, 3, 32, 32)
         self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
-        self.perturbations = [
-            PERTURBATIONS[perturbation_name]
-            for perturbation_name in self.split_specs["perturbations"]
-        ]
+        self.perturbations = []
+        for perturbation_name, severities in self.split_specs["perturbations"].items():
+            for severity in severities:
+                self.perturbations.append(
+                    partial(PERTURBATIONS[perturbation_name], severity=severity)
+                )
 
     def __len__(self):
         return len(self.data) * len(self.perturbations)
@@ -90,9 +92,7 @@ class CIFAR100CMeta(CIFAR100):
             self.targets[original_data_index],
         )
 
-        img = self.perturbations[perturbation_index](
-            img, severity=1
-        )  # TODO: parameterize severities
+        img = self.perturbations[perturbation_index](img)
 
         if self.transform is not None:
             # TODO: some perturbations output arrays, some output images. We need to clean that.

@@ -1,7 +1,7 @@
 from loguru import logger
 from torch.utils.data import DataLoader
 
-from configs import *
+from configs import dataset_config, evaluation_config, model_config, training_config
 from src.datasets.samplers import MetaSampler
 from src.datasets.utils import episodic_collate_fn
 from src.utils import set_and_print_random_seed, set_device
@@ -9,6 +9,7 @@ from src.utils import set_and_print_random_seed, set_device
 '''
 Run a complete experiment (training + evaluation)
 '''
+
 
 def train_model():
     logger.info("Initializing data loaders...")

@@ -19,7 +19,6 @@ class AbstractMetaLearner(nn.Module):
 
         Args:
             model_func (src.backbones object): backbone function
-            n_way (int): number of classes in a classification task
             training_stats (Statistics): training statistics of the model, updated during training
 
         """
