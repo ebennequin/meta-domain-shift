@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 
+from src.utils import set_device
+
 
 def confidence_interval(standard_deviation, n_samples):
     """
@@ -13,6 +15,22 @@ def confidence_interval(standard_deviation, n_samples):
         float: confidence interval
     """
     return 1.96 * standard_deviation / np.sqrt(n_samples)
+
+
+def one_hot(labels):
+    """
+
+    Args:
+        labels (torch.Tensor): 1-dimensional tensor of integers
+
+    Returns:
+        torch.Tensor: 2-dimensional tensor of shape[len(labels), max(labels)] corresponding to the one-hot
+            form of the input tensor
+    """
+    num_class = torch.max(labels) + 1
+    return set_device(
+        torch.zeros((len(labels), num_class)).scatter_(1, labels.unsqueeze(1), 1)
+    )
 
 
 def euclidean_dist(x, y):

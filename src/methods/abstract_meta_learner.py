@@ -95,7 +95,7 @@ class AbstractMetaLearner(nn.Module):
             optimizer (torch.optim.Optimizer): model optimizer
 
         """
-        print_freq = 10
+        print_freq = 100
 
         avg_loss = 0
         for episode_index, (

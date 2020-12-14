@@ -41,11 +41,15 @@ def train_model():
         n_episodes=training_config.N_VAL_TASKS,
     )
 
-    logger.info(
-        "Initializing {model} with {backbone}...",
-        model=model_config.MODEL.__name__,
-        backbone=model_config.BACKBONE.__name__,
-    )
+    try:
+        logger.info(
+            "Initializing {model} with {backbone}...",
+            model=model_config.MODEL.__name__,
+            backbone=model_config.BACKBONE.__name__,
+        )
+    except AttributeError:
+        logger.info("Initializing model...")
+
     model = set_device(model_config.MODEL(model_config.BACKBONE))
     optimizer = training_config.OPTIMIZER(model.parameters())
 
