@@ -18,7 +18,7 @@ class CIFAR100CMeta(CIFAR100):
         self,
         root: str,
         split: str,
-        image_size: int = 224,
+        image_size: int,
         target_transform: Optional[Callable] = None,
         download: bool = False,
     ):

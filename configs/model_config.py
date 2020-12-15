@@ -6,5 +6,5 @@ from src.methods import *
 # Parameters of the model (method and feature extractor)
 
 # MODEL = ProtoNet
-MODEL = partial(OptimalTransport, regularization=0.1, max_iter=100)
-BACKBONE = ResNet50
+MODEL = partial(OptimalTransport, regularization=0.05, max_iter=1000)
+BACKBONE = Conv4

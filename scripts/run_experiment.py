@@ -105,7 +105,9 @@ def eval_model(model):
 
 
 def get_loader(split: str, n_way: int, n_source: int, n_target: int, n_episodes: int):
-    dataset = dataset_config.DATASET(dataset_config.DATA_ROOT, split)
+    dataset = dataset_config.DATASET(
+        dataset_config.DATA_ROOT, split, dataset_config.IMAGE_SIZE
+    )
     sampler = MetaSampler(
         dataset,
         n_way=n_way,

@@ -5,8 +5,8 @@ from torch.optim import Adam
 # Parameters for the model training
 
 N_WAY = 5
-N_SOURCE = 5
-N_TARGET = 10
+N_SOURCE = 10
+N_TARGET = 32
 N_EPISODES = 400
 N_VAL_TASKS = 1000
 N_EPOCHS = 100

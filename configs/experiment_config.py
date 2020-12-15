@@ -4,4 +4,4 @@ from pathlib import Path
 
 SAVE_RESULTS = True
 OVERWRITE = False  # If True, will erase all previous content of SAVE_DIR
-SAVE_DIR = Path("output") / "my_experiment"
+SAVE_DIR = Path("output") / "OT_Conv4"
