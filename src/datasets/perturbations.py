@@ -3,8 +3,10 @@
 import collections
 from io import BytesIO
 from PIL import Image as PILImage
+import time
 
 import cv2
+from loguru import logger
 import numpy as np
 import skimage as sk
 from skimage.filters import gaussian
@@ -242,8 +244,19 @@ def frost(x, severity=1):
         "src/datasets/filters/frost5.jpg",
         "src/datasets/filters/frost6.jpg",
     ][idx]
-    frost = cv2.imread(filename)
-    frost = cv2.resize(frost, (0, 0), fx=0.2, fy=0.2)
+    # TODO: this is a bit dirty. We have a non reproducible bug here and we need to find out what's what.
+    while True:
+        try:
+            frost = cv2.imread(filename)
+            frost = cv2.resize(frost, (0, 0), fx=0.2, fy=0.2)
+            break
+        except cv2.error:
+            logger.warning(
+                f"Error trying to read {filename}. Maybe it was locked by an other process?"
+            )
+            time.sleep(1)
+            logger.info("Retrying...")
+
     # randomly crop and convert to rgb
     x_start, y_start = np.random.randint(0, frost.shape[0] - 32), np.random.randint(
         0, frost.shape[1] - 32
