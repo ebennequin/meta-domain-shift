@@ -1,6 +1,9 @@
-from loguru import logger
-import numpy as np
 import torch
+from torch.utils.data import DataLoader
+
+from configs import dataset_config
+from src.datasets.samplers import MetaSampler
+from src.datasets.utils import episodic_collate_fn
 
 
 def set_device(x):
@@ -11,28 +14,21 @@ def set_device(x):
     return x.to(device=device)
 
 
-def set_and_print_random_seed(random_seed=None, save_dir=None):
-    """
-    Set and print numpy random seed, for reproducibility of the training,
-    and set torch seed based on numpy random seed
-    Args:
-        random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
-        save_dir (Path): output folder where the seed is saved
-    Returns:
-        int: numpy random seed
-
-    """
-    if not random_seed:
-        random_seed = np.random.randint(0, 2 ** 32 - 1)
-    np.random.seed(random_seed)
-    torch.manual_seed(np.random.randint(0, 2 ** 32 - 1))
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    prompt = f"Random seed : {random_seed}"
-    logger.info(prompt)
-
-    if save_dir:
-        with open(save_dir / "seeds.txt", "a") as f:
-            f.write(prompt)
-
-    return random_seed
+def get_loader(split: str, n_way: int, n_source: int, n_target: int, n_episodes: int):
+    dataset = dataset_config.DATASET(
+        dataset_config.DATA_ROOT, split, dataset_config.IMAGE_SIZE
+    )
+    sampler = MetaSampler(
+        dataset,
+        n_way=n_way,
+        n_source=n_source,
+        n_target=n_target,
+        n_episodes=n_episodes,
+    )
+    return DataLoader(
+        dataset,
+        batch_sampler=sampler,
+        num_workers=12,
+        pin_memory=True,
+        collate_fn=episodic_collate_fn,
+    )
