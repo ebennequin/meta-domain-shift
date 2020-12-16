@@ -31,6 +31,8 @@ class Sinkhorn(nn.Module):
     def forward(self, x, y):
         # The Sinkhorn algorithm takes as input three variables :
         C = self._cost_matrix(x, y)  # Wasserstein cost function
+        C = C / C.max()  # Needs to normalize the matrix to be consistent with reg
+
         x_points = x.shape[-2]
         y_points = y.shape[-2]
         if x.dim() == 2:
@@ -56,7 +58,7 @@ class Sinkhorn(nn.Module):
         # or max iterations reached
         actual_nits = 0
         # Stopping criterion
-        thresh = 1e-1
+        thresh = 1e-9
 
         # Sinkhorn iterations
         for i in range(self.max_iter):
