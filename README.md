@@ -10,7 +10,7 @@
 Git clone the repo:
 
 ```
-git clone git@github.com:sicara/meta-domain-shift.git
+git clone git@github.com:ebennequin/meta-domain-shift.git
 ```
 
 Then `cd meta-domain-shift` and install virtualenv:
