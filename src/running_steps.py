@@ -107,17 +107,15 @@ def eval_model(model):
     return acc
 
 
-def set_and_print_random_seed(random_seed=None, save_dir=None):
+def set_and_print_random_seed():
     """
     Set and print numpy random seed, for reproducibility of the training,
     and set torch seed based on numpy random seed
-    Args:
-        random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
-        save_dir (Path): output folder where the seed is saved
     Returns:
         int: numpy random seed
 
     """
+    random_seed = experiment_config.RANDOM_SEED
     if not random_seed:
         random_seed = np.random.randint(0, 2 ** 32 - 1)
     np.random.seed(random_seed)
@@ -126,10 +124,6 @@ def set_and_print_random_seed(random_seed=None, save_dir=None):
     torch.backends.cudnn.benchmark = False
     prompt = f"Random seed : {random_seed}"
     logger.info(prompt)
-
-    if save_dir:
-        with open(save_dir / "seeds.txt", "a") as f:
-            f.write(prompt)
 
     return random_seed
 
