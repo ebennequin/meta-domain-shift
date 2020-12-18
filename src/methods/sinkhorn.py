@@ -26,7 +26,7 @@ class Sinkhorn(nn.Module):
         super(Sinkhorn, self).__init__()
         self.eps = eps
         self.max_iter = max_iter
-        self.thresh = thres
+        self.thresh = thresh
         self.reduction = reduction
 
     def forward(self, x, y):

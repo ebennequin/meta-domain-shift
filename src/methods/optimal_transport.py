@@ -17,8 +17,11 @@ class OptimalTransport(AbstractMetaLearner):
         """
         z_support, z_query = self.extract_features(support_images, query_images)
 
-        _, matching, _ = self.sinkhorn(z_query, z_support)
+        _, transport_plan, _ = self.sinkhorn(z_query, z_support)
 
-        scores = torch.matmul(matching, one_hot(support_labels))
+        scores = torch.matmul(
+            transport_plan / transport_plan.sum(axis=1, keepdims=True),
+            one_hot(support_labels),
+        )
 
         return scores
