@@ -97,6 +97,7 @@ class AbstractMetaLearner(nn.Module):
         """
         print_freq = 100
 
+        loss_list = []
         avg_loss = 0
         for episode_index, (
             support_images,
@@ -107,23 +108,24 @@ class AbstractMetaLearner(nn.Module):
             optimizer.zero_grad()
 
             scores = self.set_forward(support_images, support_labels, query_images)
-
             query_labels = set_device(query_labels)
             loss = self.loss_fn(scores, query_labels)
 
             loss.backward()
             optimizer.step()
 
-            avg_loss = avg_loss + loss.item()
-            if episode_index % print_freq == 0:
+            loss_list.append(loss.item())
+            if episode_index % print_freq == print_freq - 1:
                 logger.info(
                     "Epoch {epoch} | Batch {episode_index}/{n_batches} | Loss {loss}".format(
                         epoch=epoch,
-                        episode_index=episode_index,
+                        episode_index=episode_index + 1,
                         n_batches=len(train_loader),
-                        loss=avg_loss / float(episode_index + 1),
+                        loss=np.asarray(loss_list).mean(),
                     )
                 )
+
+        return np.asarray(loss_list).mean()
 
     def eval_loop(self, test_loader):
         """

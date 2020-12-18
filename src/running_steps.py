@@ -4,6 +4,7 @@ from shutil import rmtree
 
 import numpy as np
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from loguru import logger
 
 from configs import (
@@ -52,16 +53,20 @@ def train_model():
     best_model_epoch = -1
     best_model_state = None
 
+    writer = SummaryWriter()
+
     logger.info("Model and data are ready. Starting training...")
     for epoch in range(training_config.N_EPOCHS):
         # Set model to training mode
         model.train()
         # Execute a training loop of the model
-        model.train_loop(epoch, train_loader, optimizer)
+        average_loss = model.train_loop(epoch, train_loader, optimizer)
+        writer.add_scalar("loss", average_loss, epoch)
         # Set model to evaluation mode
         model.eval()
         # Evaluate on validation set
         _, acc, _ = model.eval_loop(val_loader)
+        writer.add_scalar("val", acc, epoch)
 
         # We make sure the best model is saved on disk, in case the training breaks
         if acc > max_acc:
@@ -74,6 +79,8 @@ def train_model():
     logger.info("Retrieving model with best validation accuracy...")
     model.load_state_dict(best_model_state)
     logger.info(f"Retrieved model from epoch {best_model_epoch}")
+
+    writer.close()
 
     return model
 
