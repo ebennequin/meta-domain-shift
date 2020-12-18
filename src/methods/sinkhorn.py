@@ -22,10 +22,11 @@ class Sinkhorn(nn.Module):
         - Output: :math:`(N)` or :math:`()`, depending on `reduction`
     """
 
-    def __init__(self, eps, max_iter, reduction="none"):
+    def __init__(self, eps, max_iter, thresh, reduction="none"):
         super(Sinkhorn, self).__init__()
         self.eps = eps
         self.max_iter = max_iter
+        self.thresh = thres
         self.reduction = reduction
 
     def forward(self, x, y):
@@ -57,8 +58,6 @@ class Sinkhorn(nn.Module):
         # To check if algorithm terminates because of threshold
         # or max iterations reached
         actual_nits = 0
-        # Stopping criterion
-        thresh = 1e-9
 
         # Sinkhorn iterations
         for i in range(self.max_iter):
@@ -79,7 +78,7 @@ class Sinkhorn(nn.Module):
             err = (u - u1).abs().sum(-1).mean()
 
             actual_nits += 1
-            if err.item() < thresh:
+            if err.item() < self.thresh:
                 break
 
         U, V = u, v

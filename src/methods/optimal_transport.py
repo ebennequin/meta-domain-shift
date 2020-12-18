@@ -5,9 +5,11 @@ from src.methods.utils import one_hot
 
 
 class OptimalTransport(AbstractMetaLearner):
-    def __init__(self, model_func, regularization, max_iter):
+    def __init__(self, model_func, regularization, max_iter, stopping_criterion):
         super(OptimalTransport, self).__init__(model_func)
-        self.sinkhorn = Sinkhorn(eps=regularization, max_iter=max_iter)
+        self.sinkhorn = Sinkhorn(
+            eps=regularization, max_iter=max_iter, thresh=stopping_criterion
+        )
 
     def set_forward(self, support_images, support_labels, query_images):
         """
