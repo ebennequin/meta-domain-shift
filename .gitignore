@@ -24,6 +24,7 @@ __pycache__/
 # Heavy data
 data/
 output/*
+runs/*
 
 .polyaxon/
 
