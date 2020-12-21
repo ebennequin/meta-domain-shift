@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from src.methods.abstract_meta_learner import AbstractMetaLearner
 from src.methods.sinkhorn import Sinkhorn
 from src.methods.utils import one_hot
@@ -7,6 +8,7 @@ from src.methods.utils import one_hot
 class OptimalTransport(AbstractMetaLearner):
     def __init__(self, model_func, regularization, max_iter, stopping_criterion):
         super(OptimalTransport, self).__init__(model_func)
+        self.loss_fn = nn.NLLLoss()
         self.sinkhorn = Sinkhorn(
             eps=regularization, max_iter=max_iter, thresh=stopping_criterion
         )
@@ -19,9 +21,9 @@ class OptimalTransport(AbstractMetaLearner):
 
         _, transport_plan, _ = self.sinkhorn(z_query, z_support)
 
-        scores = torch.matmul(
+        probs = torch.matmul(
             transport_plan / transport_plan.sum(axis=1, keepdims=True),
             one_hot(support_labels),
         )
 
-        return scores
+        return torch.log(probs)
