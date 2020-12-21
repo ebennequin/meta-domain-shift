@@ -27,6 +27,7 @@ output/*
 runs/*
 
 .polyaxon/
+.polyaxonignore
 
 .DS_Store
 *.diff
