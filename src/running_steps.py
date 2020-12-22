@@ -61,7 +61,6 @@ def train_model():
         n_episodes=training_config.N_VAL_TASKS,
     )
     if training_config.TEST_SET_VALIDATION_FREQUENCY:
-        logger.warning("Here")
         test_loader = get_loader(
             "test",
             n_way=training_config.N_WAY,
