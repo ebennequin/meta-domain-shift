@@ -1,9 +1,11 @@
 from distutils.dir_util import copy_tree
 from pathlib import Path
+import random
 from shutil import rmtree
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from loguru import logger
 
@@ -14,7 +16,29 @@ from configs import (
     experiment_config,
     evaluation_config,
 )
-from src.utils import get_loader, set_device
+from src.datasets.samplers import MetaSampler
+from src.datasets.utils import episodic_collate_fn
+from src.utils import set_device
+
+
+def get_loader(split: str, n_way: int, n_source: int, n_target: int, n_episodes: int):
+    dataset = dataset_config.DATASET(
+        dataset_config.DATA_ROOT, split, dataset_config.IMAGE_SIZE
+    )
+    sampler = MetaSampler(
+        dataset,
+        n_way=n_way,
+        n_source=n_source,
+        n_target=n_target,
+        n_episodes=n_episodes,
+    )
+    return DataLoader(
+        dataset,
+        batch_sampler=sampler,
+        num_workers=12,
+        pin_memory=True,
+        collate_fn=episodic_collate_fn,
+    )
 
 
 def train_model():
