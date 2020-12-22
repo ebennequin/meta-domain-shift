@@ -13,3 +13,4 @@ N_EPOCHS = 100
 OPTIMIZER = partial(
     Adam, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-04, amsgrad=False
 )
+TEST_SET_VALIDATION_FREQUENCY = 21  # Set to None to avoid using test set during training

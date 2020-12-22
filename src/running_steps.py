@@ -60,6 +60,15 @@ def train_model():
         n_target=training_config.N_TARGET,
         n_episodes=training_config.N_VAL_TASKS,
     )
+    if training_config.TEST_SET_VALIDATION_FREQUENCY:
+        logger.warning("Here")
+        test_loader = get_loader(
+            "test",
+            n_way=training_config.N_WAY,
+            n_source=training_config.N_SOURCE,
+            n_target=training_config.N_TARGET,
+            n_episodes=training_config.N_VAL_TASKS,
+        )
 
     try:
         logger.info(
@@ -98,6 +107,15 @@ def train_model():
             best_model_epoch = epoch
             best_model_state = model.state_dict()
             torch.save(best_model_state, experiment_config.SAVE_DIR / "best_model.tar")
+
+        if training_config.TEST_SET_VALIDATION_FREQUENCY:
+            if (
+                epoch % training_config.TEST_SET_VALIDATION_FREQUENCY
+                == training_config.TEST_SET_VALIDATION_FREQUENCY - 1
+            ):
+                logger.info("Validating on test set...")
+                _, acc, _ = model.eval_loop(test_loader)
+                writer.add_scalar("val_on_test_set", acc, epoch)
 
     logger.info(f"Training over after {training_config.N_EPOCHS} epochs")
     logger.info("Retrieving model with best validation accuracy...")
