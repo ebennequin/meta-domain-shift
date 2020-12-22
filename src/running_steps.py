@@ -53,7 +53,7 @@ def train_model():
     best_model_epoch = -1
     best_model_state = None
 
-    writer = SummaryWriter()
+    writer = SummaryWriter(log_dir=experiment_config.SAVE_DIR)
 
     logger.info("Model and data are ready. Starting training...")
     for epoch in range(training_config.N_EPOCHS):
@@ -137,7 +137,7 @@ def set_and_print_random_seed():
 
 def prepare_output():
     if experiment_config.SAVE_RESULTS:
-        if experiment_config.OVERWRITE:
+        if experiment_config.OVERWRITE & experiment_config.SAVE_DIR.exists():
             rmtree(str(experiment_config.SAVE_DIR))
             logger.info(
                 "Deleting previous content of {directory}",

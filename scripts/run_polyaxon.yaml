@@ -1,0 +1,30 @@
+
+---
+version: 1
+
+kind: experiment
+
+environment:
+  resources:
+    gpu:
+      requests: 1
+      limits: 1
+
+build:
+  image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
+  build_steps:
+    - apt-get update
+    - apt-get install ffmpeg libsm6 libxext6 libmagickwand-dev -y
+    - pip install --no-cache-dir -r requirements.txt
+  env_vars:
+    - ['LC_ALL', 'C.UTF-8']
+    - ['PYTHONPATH', '$PYTHONPATH:/code']
+
+run:
+  cmd:
+    # Allow to access the mounted data_folder as if it was in ./data
+    - ln -s /data/etienneb ./data
+    # Allow to access the mounted output_folder as if it was in ./output
+    - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
+    # Run the experiment
+    - python -m scripts.run_experiment
