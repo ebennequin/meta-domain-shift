@@ -27,6 +27,17 @@ Then install dependencies: `pip install -r requirements.txt`.
 Configure your experiment by changing the values in `configs/*.py`, then launch your experiment.
 ```python scripts/run_experiment.py```
 
+All outputs of the experiment (explicit configuration, logs, trained model state and TensorBoard logs) 
+can then be found in the directory specified in `configs/experiment_config.py`.
+
+### Track trainings with Tensorboard
+
+We log the loss and validation accuracy during the training for visualization in Tensorboard. The logs of an
+experiment can be found in the output directory (`events.out.tfevents.[...]`). To visualize them in Tensorboard, run:
+```
+tensorboard --logdir=output_dir
+```
+
 ## Contribute
 
 1. Make sure you start from an up to date `master` branch
