@@ -68,23 +68,21 @@ class AbstractMetaLearner(nn.Module):
 
         return z_support, z_query
 
-    def evaluate(self, support_images, support_labels, query_images, query_labels):
+    @staticmethod
+    def evaluate(scores, query_labels):
         """
         Predict labels of query images and returns the number of correct top1 predictions
         Args:
-            support_images (torch.Tensor): shape (number_of_support_set_images, **image_shape)
-            support_labels (torch.Tensor): artificial support set labels in range (0, n_way)
-            query_images (torch.Tensor): shape (number_of_query_set_images, **image_shape)
+            scores (torch.Tensor): shape (number_of_query_set_images, n_way)
             query_labels (torch.Tensor): artificial query set labels in range (0, n_way)
 
         Returns:
-            tuple(float, int): respectively number of correct top1 predictions, and total number of predictions
+            float: classification accuracy in [0,1]
         """
-        scores = self.set_forward(support_images, support_labels, query_images)
 
         topk_scores, topk_labels = scores.data.topk(1, 1, True, True)
-        top1_correct = float((topk_labels[:, 0] == set_device(query_labels)).sum())
-        return float(top1_correct), len(query_labels)
+        top1_correct = float((topk_labels[:, 0] == query_labels).sum())
+        return float(top1_correct) / len(query_labels)
 
     def train_loop(self, epoch, train_loader, optimizer):
         """
@@ -94,11 +92,13 @@ class AbstractMetaLearner(nn.Module):
             train_loader (DataLoader): loader of a given number of episodes
             optimizer (torch.optim.Optimizer): model optimizer
 
+        Returns:
+            tuple(float, float): resp. average loss and classification accuracy
         """
         print_freq = 100
 
         loss_list = []
-        avg_loss = 0
+        acc_list = []
         for episode_index, (
             support_images,
             support_labels,
@@ -109,12 +109,13 @@ class AbstractMetaLearner(nn.Module):
 
             scores = self.set_forward(support_images, support_labels, query_images)
             query_labels = set_device(query_labels)
+            acc_list.append(self.evaluate(scores, query_labels) * 100)
+
             loss = self.loss_fn(scores, query_labels)
-            
             loss.backward()
             optimizer.step()
-
             loss_list.append(loss.item())
+
             if episode_index % print_freq == print_freq - 1:
                 logger.info(
                     "Epoch {epoch} | Batch {episode_index}/{n_batches} | Loss {loss}".format(
@@ -125,7 +126,7 @@ class AbstractMetaLearner(nn.Module):
                     )
                 )
 
-        return np.asarray(loss_list).mean()
+        return np.asarray(loss_list).mean(), np.asarray(acc_list).mean()
 
     def eval_loop(self, test_loader):
         """
@@ -134,9 +135,10 @@ class AbstractMetaLearner(nn.Module):
             test_loader (DataLoader): loader of a given number of episodes
 
         Returns:
-            float: average accuracy on evaluation set
+            tuple(float, float): resp. average loss and classification accuracy
         """
         acc_all = []
+        loss_all = []
 
         n_tasks = len(test_loader)
         for episode_index, (
@@ -146,10 +148,12 @@ class AbstractMetaLearner(nn.Module):
             query_labels,
         ) in enumerate(test_loader):
 
-            correct_this, count_this = self.evaluate(
-                support_images, support_labels, query_images, query_labels
-            )
-            acc_all.append(correct_this / count_this * 100)
+            scores = self.set_forward(support_images, support_labels, query_images)
+            query_labels = set_device(query_labels)
+
+            loss_all.append(self.loss_fn(scores, query_labels).item())
+
+            acc_all.append(self.evaluate(scores, query_labels) * 100)
 
         acc_all = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
@@ -159,4 +163,4 @@ class AbstractMetaLearner(nn.Module):
             % (n_tasks, acc_mean, confidence_interval(acc_std, n_tasks))
         )
 
-        return acc_all, acc_mean, acc_std
+        return np.asarray(loss_all).mean(), acc_mean

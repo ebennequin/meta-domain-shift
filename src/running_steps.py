@@ -92,17 +92,19 @@ def train_model():
         # Set model to training mode
         model.train()
         # Execute a training loop of the model
-        average_loss = model.train_loop(epoch, train_loader, optimizer)
-        writer.add_scalar("loss", average_loss, epoch)
+        train_loss, train_acc = model.train_loop(epoch, train_loader, optimizer)
+        writer.add_scalar("Train/loss", train_loss, epoch)
+        writer.add_scalar("Train/acc", train_acc, epoch)
         # Set model to evaluation mode
         model.eval()
         # Evaluate on validation set
-        _, acc, _ = model.eval_loop(val_loader)
-        writer.add_scalar("val", acc, epoch)
+        val_loss, val_acc = model.eval_loop(val_loader)
+        writer.add_scalar("Val/loss", val_loss, epoch)
+        writer.add_scalar("Val/acc", val_acc, epoch)
 
         # We make sure the best model is saved on disk, in case the training breaks
-        if acc > max_acc:
-            max_acc = acc
+        if val_acc > max_acc:
+            max_acc = val_acc
             best_model_epoch = epoch
             best_model_state = model.state_dict()
             torch.save(best_model_state, experiment_config.SAVE_DIR / "best_model.tar")
@@ -113,8 +115,8 @@ def train_model():
                 == training_config.TEST_SET_VALIDATION_FREQUENCY - 1
             ):
                 logger.info("Validating on test set...")
-                _, acc, _ = model.eval_loop(test_loader)
-                writer.add_scalar("val_on_test_set", acc, epoch)
+                _, test_acc = model.eval_loop(test_loader)
+                writer.add_scalar("Test/acc", test_acc, epoch)
 
     logger.info(f"Training over after {training_config.N_EPOCHS} epochs")
     logger.info("Retrieving model with best validation accuracy...")
@@ -150,7 +152,7 @@ def eval_model(model):
     logger.info("Starting model evaluation...")
     model.eval()
 
-    _, acc, _ = model.eval_loop(test_loader)
+    _, acc = model.eval_loop(test_loader)
 
     return acc
 
