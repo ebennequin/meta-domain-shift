@@ -110,17 +110,7 @@ class AbstractMetaLearner(nn.Module):
             scores = self.set_forward(support_images, support_labels, query_images)
             query_labels = set_device(query_labels)
             loss = self.loss_fn(scores, query_labels)
-            # TODO: we encountered an issue here, this is meant to give us additional intel if the issue rises again
-            # TODO: if it hasn't by 18/01/2021, delete this
-            # Issue: http://localhost:8000/app/sicara/meta-domain-shift/experiments/16#logs
-            if len(loss.shape) != 0:
-                logger.warning(
-                    "Loss tensor has unexpected shape. Logging variables values..."
-                )
-                logger.info(
-                    {k: v for k, v in locals().items() if not k.startswith("_")}
-                )
-
+            
             loss.backward()
             optimizer.step()
 
