@@ -351,7 +351,7 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-        self.final_feat_dim = 1600
+        self.final_feat_dim = 1600  # I obseverd that final feat dim is actually 256, I don't know what this is for.
 
     def forward(self, x):
         out = self.trunk(x)
