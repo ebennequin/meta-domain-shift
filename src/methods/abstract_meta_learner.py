@@ -59,7 +59,6 @@ class AbstractMetaLearner(nn.Module):
                 - shape(,), training loss
         """
         scores = self.set_forward(support_images, support_labels, query_images)
-        query_labels = set_device(query_labels)
         loss = self.loss_fn(scores, query_labels)
 
         return scores, loss
@@ -172,10 +171,12 @@ class AbstractMetaLearner(nn.Module):
             query_labels,
         ) in enumerate(test_loader):
 
-            scores = self.set_forward(support_images, support_labels, query_images)
             query_labels = set_device(query_labels)
+            scores, loss = self.set_forward_loss(
+                support_images, support_labels, query_images, query_labels
+            )
 
-            loss_all.append(self.loss_fn(scores, query_labels).item())
+            loss_all.append(loss.item())
 
             acc_all.append(self.evaluate(scores, query_labels) * 100)
 
