@@ -32,7 +32,10 @@ class Sinkhorn(nn.Module):
     def forward(self, x, y):
         # The Sinkhorn algorithm takes as input three variables :
         C = self._cost_matrix(x, y)  # Wasserstein cost function
-        C = C / C.max()  # Needs to normalize the matrix to be consistent with reg
+        cost_normalization = C.max()
+        C = (
+            C / cost_normalization
+        )  # Needs to normalize the matrix to be consistent with reg
 
         x_points = x.shape[-2]
         y_points = y.shape[-2]
@@ -85,7 +88,7 @@ class Sinkhorn(nn.Module):
         # Transport plan pi = diag(a)*K*diag(b)
         pi = torch.exp(self.M(C, U, V))
         # Sinkhorn distance
-        cost = torch.sum(pi * C, dim=(-2, -1))
+        cost = torch.sum(pi * C, dim=(-2, -1)) * cost_normalization
 
         if self.reduction == "mean":
             cost = cost.mean()

@@ -42,6 +42,28 @@ class AbstractMetaLearner(nn.Module):
         """
         pass
 
+    def set_forward_loss(
+        self, support_images, support_labels, query_images, query_labels
+    ):
+        """
+        Predict query set labels using information from support set labelled images, and computes the loss.
+        Args:
+            support_images (torch.Tensor): shape (number_of_support_set_images, **image_shape)
+            support_labels (torch.Tensor): artificial support set labels in range (0, n_way)
+            query_images (torch.Tensor): shape (number_of_query_set_images, **image_shape)
+            query_labels (torch.Tensor): artificial query set labels in range (0, n_way)
+
+        Returns:
+            tuple(torch.Tensor, torch.Tensor):
+                - shape(n_query*n_way, n_way), classification prediction for each query data
+                - shape(,), training loss
+        """
+        scores = self.set_forward(support_images, support_labels, query_images)
+        query_labels = set_device(query_labels)
+        loss = self.loss_fn(scores, query_labels)
+
+        return scores, loss
+
     def extract_features(self, support_images, query_images):
         """
         Computes the features vectors of the support and query sets
@@ -107,14 +129,16 @@ class AbstractMetaLearner(nn.Module):
         ) in enumerate(train_loader):
             optimizer.zero_grad()
 
-            scores = self.set_forward(support_images, support_labels, query_images)
             query_labels = set_device(query_labels)
-            acc_list.append(self.evaluate(scores, query_labels) * 100)
+            scores, loss = self.set_forward_loss(
+                support_images, support_labels, query_images, query_labels
+            )
 
-            loss = self.loss_fn(scores, query_labels)
             loss.backward()
             optimizer.step()
             loss_list.append(loss.item())
+
+            acc_list.append(self.evaluate(scores, query_labels) * 100)
 
             if episode_index % print_freq == print_freq - 1:
                 logger.info(
