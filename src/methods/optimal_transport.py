@@ -43,6 +43,31 @@ class OptimalTransport(AbstractMetaLearner):
 
         return torch.log(probs), cost
 
+    def get_loss(self, query_labels, scores, transport_cost):
+        """
+        Computes loss from classification error and transport cost
+        Args:
+            query_labels (torch.Tensor): artificial query set labels in range (0, n_way)
+            scores (torch.Tensor): classification scores to be compared to ground truth query labels
+            transport_cost (torch.Tensor): transport cost of the optimal transport
+        Returns:
+            torch.Tensor: loss
+        """
+        classification_loss = self.loss_fn(scores, query_labels)
+
+        if self.training:
+            self.loss_writer.add_scalar(
+                "Train/classification_loss", classification_loss, self.episode_count
+            )
+            self.loss_writer.add_scalar(
+                "Train/transport_cost", transport_cost, self.episode_count
+            )
+            self.episode_count = self.episode_count + 1
+
+        loss = classification_loss + self.lambda_cost * transport_cost
+
+        return loss
+
     def set_forward(self, support_images, support_labels, query_images):
         """
         Overwrites method set_forward in AbstractMetaLearner.
@@ -59,17 +84,6 @@ class OptimalTransport(AbstractMetaLearner):
         """
         logprobs, cost = self.execute(support_images, support_labels, query_images)
 
-        classification_loss = self.loss_fn(logprobs, query_labels)
-
-        if self.training:
-            self.loss_writer.add_scalar(
-                "Train/classification_loss", classification_loss, self.episode_count
-            )
-            self.loss_writer.add_scalar(
-                "Train/transport_cost", cost, self.episode_count
-            )
-            self.episode_count = self.episode_count + 1
-
-        loss = classification_loss + self.lambda_cost * cost
+        loss = self.get_loss(query_labels, logprobs, cost)
 
         return logprobs, loss
