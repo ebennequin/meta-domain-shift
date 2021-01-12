@@ -11,13 +11,15 @@ environment:
 
 hptuning:
 
-  concurrency: 2
+  concurrency: 4
 
   matrix:
     n_source:
       values: [1, 5]
     n_target:
-      values: [8, 16, 32, 64]
+      values: [8, 16]
+#    lambda_cost:
+#      values: [0.0, 0.001, 0.01, 0.1, 1.0]
 
 build:
   image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
@@ -39,5 +41,6 @@ run:
     # Create grid
     - 'echo "N_SOURCE = {{ n_source }}" >> ./configs/training_config.py'
     - 'echo "N_TARGET = {{ n_target }}" >> ./configs/training_config.py'
+#    - 'echo "lambda_cost={{ lambda_cost }})" >> ./configs/model_config.py'
     # Run the experiment
     - python -m scripts.run_experiment

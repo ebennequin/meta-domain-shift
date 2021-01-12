@@ -88,7 +88,7 @@ class Sinkhorn(nn.Module):
         # Transport plan pi = diag(a)*K*diag(b)
         pi = torch.exp(self.M(C, U, V))
         # Sinkhorn distance
-        cost = torch.sum(pi * C, dim=(-2, -1)) * cost_normalization
+        cost = torch.sum(pi * C, dim=(-2, -1))
 
         if self.reduction == "mean":
             cost = cost.mean()
