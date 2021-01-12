@@ -8,9 +8,10 @@ from src.methods import *
 # MODEL = ProtoNet
 BACKBONE = Conv4
 MODEL = partial(
-    OptimalTransport,
+    PrototypicalOptimalTransport,
+    # OptimalTransport,
     regularization=0.05,
     max_iter=1000,
     stopping_criterion=1e-4,
-    lambda_cost=0.001,
+    lambda_cost=0.0,
 )

@@ -89,6 +89,22 @@ class AbstractMetaLearner(nn.Module):
 
         return z_support, z_query
 
+    def get_prototypes(self, features, labels):
+        """
+        Compute a prototype for each class.
+        Args:
+            features (torch.Tensor): shape[n_images, feature_dim], feature vectors
+            labels (torch.Tensor): shape[n_images], label corresponding to each feature vector
+        Returns:
+            torch.Tensor: prototypes. shape[number_of_unique_values_in_labels, feature_dim]
+        """
+
+        n_way = len(torch.unique(labels))
+        # Prototype i is the mean of all instances of features corresponding to labels == i
+        return torch.cat(
+            [features[torch.nonzero(labels == label)].mean(0) for label in range(n_way)]
+        )
+
     @staticmethod
     def evaluate(scores, query_labels):
         """
