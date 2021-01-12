@@ -21,26 +21,16 @@ class OptimalTransport(AbstractMetaLearner):
         self.episode_count = 0
         self.loss_writer = SummaryWriter(log_dir=experiment_config.SAVE_DIR)
 
-    def set_forward(self, support_images, support_labels, query_images):
+    def execute(self, support_images, support_labels, query_images):
         """
-        Overwrites method set_forward in AbstractMetaLearner.
-        """
-        z_support, z_query = self.extract_features(support_images, query_images)
-
-        _, transport_plan, _ = self.sinkhorn(z_query, z_support)
-
-        probs = torch.matmul(
-            transport_plan / transport_plan.sum(axis=1, keepdims=True),
-            one_hot(support_labels),
-        )
-
-        return torch.log(probs)
-
-    def set_forward_loss(
-        self, support_images, support_labels, query_images, query_labels
-    ):
-        """
-        Overwrites method set_forward_loss in AbstractMetaLearner.
+        Applies Optimal Transport from query images to support images,
+            and uses the outcome to predict query classification scores.
+        Args:
+            support_images (torch.Tensor): shape (number_of_support_set_images, **image_shape)
+            support_labels (torch.Tensor): artificial support set labels in range (0, n_way)
+            query_images (torch.Tensor): shape (number_of_query_set_images, **image_shape)
+        Returns:
+            tuple(torch.Tensor, torch.Tensor) : respectively classification scores, and transport cost
         """
         z_support, z_query = self.extract_features(support_images, query_images)
 
@@ -51,8 +41,25 @@ class OptimalTransport(AbstractMetaLearner):
             one_hot(support_labels),
         )
 
-        scores = torch.log(probs)
-        classification_loss = self.loss_fn(scores, query_labels)
+        return torch.log(probs), cost
+
+    def set_forward(self, support_images, support_labels, query_images):
+        """
+        Overwrites method set_forward in AbstractMetaLearner.
+        """
+        logprobs, _ = self.execute(support_images, support_labels, query_images)
+
+        return logprobs
+
+    def set_forward_loss(
+        self, support_images, support_labels, query_images, query_labels
+    ):
+        """
+        Overwrites method set_forward_loss in AbstractMetaLearner.
+        """
+        logprobs, cost = self.execute(support_images, support_labels, query_images)
+
+        classification_loss = self.loss_fn(logprobs, query_labels)
 
         if self.training:
             self.loss_writer.add_scalar(
@@ -65,4 +72,4 @@ class OptimalTransport(AbstractMetaLearner):
 
         loss = classification_loss + self.lambda_cost * cost
 
-        return scores, loss
+        return logprobs, loss
