@@ -20,6 +20,8 @@ hptuning:
       values: [8, 16]
 #    lambda_cost:
 #      values: [0.0, 0.001, 0.01, 0.1, 1.0]
+    random_seed:
+      values: [1, 2, 3, 4, 5, 6]
 
 build:
   image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
@@ -41,6 +43,7 @@ run:
     # Create grid
     - 'echo "N_SOURCE = {{ n_source }}" >> ./configs/training_config.py'
     - 'echo "N_TARGET = {{ n_target }}" >> ./configs/training_config.py'
+    - 'echo "RANDOM_SEED = {{ random_seed }}" >> ./configs/experiment_config.py'
 #    - 'echo "lambda_cost={{ lambda_cost }})" >> ./configs/model_config.py'
     # Run the experiment
     - python -m scripts.run_experiment
