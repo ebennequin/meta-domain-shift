@@ -142,6 +142,8 @@ class AbstractMetaLearner(nn.Module):
             query_images,
             query_labels,
             _,
+            _,
+            _,
         ) in enumerate(train_loader):
             optimizer.zero_grad()
 
@@ -187,6 +189,8 @@ class AbstractMetaLearner(nn.Module):
             query_images,
             query_labels,
             class_ids,
+            source_domain,
+            target_domain,
         ) in enumerate(test_loader):
 
             query_labels = set_device(query_labels)
