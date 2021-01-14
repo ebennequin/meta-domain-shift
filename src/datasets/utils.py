@@ -11,7 +11,8 @@ def episodic_collate_fn(input_data):
             - the group of this image
 
     Returns:
-        tuple(Tensor, Tensor, Tensor, Tensor): respectively source images, their labels, target images, their labels
+        tuple(Tensor, Tensor, Tensor, Tensor, list[int]): respectively source images, their labels, target images, their labels,
+            and the dataset class ids of the class sampled in the episode
     """
     source = input_data[0][2]
     target = input_data[-1][2]
@@ -29,4 +30,4 @@ def episodic_collate_fn(input_data):
         [true_class_ids.index(x[1]) for x in input_data if x[2] == target]
     )
 
-    return images_source, labels_source, images_target, labels_target
+    return images_source, labels_source, images_target, labels_target, true_class_ids
