@@ -52,6 +52,7 @@ class CIFAR100CMeta(CIFAR100):
             self.class_to_idx[class_name]
             for class_name in self.split_specs["class_names"]
         }
+        self.id_to_class = {v: k for k, v in self.class_to_idx.items()}
 
         self.data: Any = []
         self.targets = []
@@ -75,11 +76,14 @@ class CIFAR100CMeta(CIFAR100):
         self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
 
         self.perturbations = []
+        id_to_domain_list = []
         for perturbation_name, severities in self.split_specs["perturbations"].items():
             for severity in severities:
                 self.perturbations.append(
                     partial(PERTURBATIONS[perturbation_name], severity=severity)
                 )
+                id_to_domain_list.append(f"{perturbation_name} {severity}")
+        self.id_to_domain = dict(enumerate(id_to_domain_list))
 
     def __len__(self):
         return len(self.data) * len(self.perturbations)
