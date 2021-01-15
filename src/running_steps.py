@@ -4,6 +4,7 @@ import random
 from shutil import rmtree
 
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -32,12 +33,15 @@ def get_loader(split: str, n_way: int, n_source: int, n_target: int, n_episodes:
         n_target=n_target,
         n_episodes=n_episodes,
     )
-    return DataLoader(
+    return (
+        DataLoader(
+            dataset,
+            batch_sampler=sampler,
+            num_workers=12,
+            pin_memory=True,
+            collate_fn=episodic_collate_fn,
+        ),
         dataset,
-        batch_sampler=sampler,
-        num_workers=12,
-        pin_memory=True,
-        collate_fn=episodic_collate_fn,
     )
 
 
@@ -46,14 +50,14 @@ def train_model():
         "Initializing data loaders for {dataset}...",
         dataset=dataset_config.DATASET.__name__,
     )
-    train_loader = get_loader(
+    train_loader, _ = get_loader(
         "train",
         n_way=training_config.N_WAY,
         n_source=training_config.N_SOURCE,
         n_target=training_config.N_TARGET,
         n_episodes=training_config.N_EPISODES,
     )
-    val_loader = get_loader(
+    val_loader, _ = get_loader(
         "val",
         n_way=training_config.N_WAY,
         n_source=training_config.N_SOURCE,
@@ -61,7 +65,7 @@ def train_model():
         n_episodes=training_config.N_VAL_TASKS,
     )
     if training_config.TEST_SET_VALIDATION_FREQUENCY:
-        test_loader = get_loader(
+        test_loader, _ = get_loader(
             "test",
             n_way=training_config.N_WAY,
             n_source=training_config.N_SOURCE,
@@ -136,12 +140,32 @@ def load_model(state_path: Path):
     return model
 
 
+def elucidate_ids(df, dataset):
+    """
+    Retrieves explicit class and domain names in dataset from their integer index,
+        and returns modified DataFrame
+    Args:
+        df (pd.DataFrame): input DataFrame. Must be the same format as the output of AbstractMetaLearner.get_task_perf()
+        dataset (Dataset): the dataset
+    Returns:
+        pd.DataFrame: output DataFrame with explicit class and domain names
+    """
+    return df.replace(
+        {
+            "predicted_label": dataset.id_to_class,
+            "true_label": dataset.id_to_class,
+            "source_domain": dataset.id_to_domain,
+            "target_domain": dataset.id_to_domain,
+        }
+    )
+
+
 def eval_model(model):
     logger.info(
         "Initializing test data from {dataset}...",
         dataset=dataset_config.DATASET.__name__,
     )
-    test_loader = get_loader(
+    test_loader, test_dataset = get_loader(
         "test",
         n_way=evaluation_config.N_WAY,
         n_source=evaluation_config.N_SOURCE,
@@ -154,7 +178,9 @@ def eval_model(model):
 
     _, acc, stats_df = model.eval_loop(test_loader)
 
-    stats_df.to_csv(experiment_config.SAVE_DIR / "evaluation_stats.csv")
+    stats_df = elucidate_ids(stats_df, test_dataset)
+
+    stats_df.to_csv(experiment_config.SAVE_DIR / "evaluation_stats.csv", index=False)
 
     return acc
 

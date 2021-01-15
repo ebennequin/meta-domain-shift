@@ -137,26 +137,26 @@ class AbstractMetaLearner(nn.Module):
             target_id (int): index of the target domain for this task
 
         Returns:
-            pd.DataFrame: for each query, gives current task id, source and target domain,
-                ground truth label, and the id and classification score for each class
-                composing the task
+            pd.DataFrame: for each couple (query, class), gives classification score, class_id,
+                ground truth query label, current task id and source and target domain,
         """
-        return (
-            pd.DataFrame(
-                {
-                    f"class_{i}_score": classification_scores[:, i]
-                    for i in range(len(class_ids))
-                }
-            )
-            .assign(
-                **{f"class_{i}_id": class_id for i, class_id in enumerate(class_ids)}
-            )
-            .assign(
-                true_label=[class_ids[label] for label in labels],
-                task_id=task_id,
-                source_domain=source_id,
-                target_domain=target_id,
-            )
+        return pd.concat(
+            [
+                pd.DataFrame(
+                    {
+                        "task_id": task_id,
+                        "source_domain": source_id,
+                        "target_domain": target_id,
+                        "true_label": class_ids[labels[i]],
+                        "predicted_label": [
+                            class_ids[label]
+                            for label in range(classification_scores.shape[1])
+                        ],
+                        "score": classification_scores[i],
+                    }
+                )
+                for i in range(labels.shape[0])
+            ]
         )
 
     def train_loop(self, epoch, train_loader, optimizer):
