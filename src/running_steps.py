@@ -98,7 +98,7 @@ def train_model():
         # Set model to evaluation mode
         model.eval()
         # Evaluate on validation set
-        val_loss, val_acc = model.eval_loop(val_loader)
+        val_loss, val_acc, _ = model.eval_loop(val_loader)
         writer.add_scalar("Val/loss", val_loss, epoch)
         writer.add_scalar("Val/acc", val_acc, epoch)
 
@@ -115,7 +115,7 @@ def train_model():
                 == training_config.TEST_SET_VALIDATION_FREQUENCY - 1
             ):
                 logger.info("Validating on test set...")
-                _, test_acc = model.eval_loop(test_loader)
+                _, test_acc, _ = model.eval_loop(test_loader)
                 writer.add_scalar("Test/acc", test_acc, epoch)
 
     logger.info(f"Training over after {training_config.N_EPOCHS} epochs")
@@ -152,7 +152,9 @@ def eval_model(model):
     logger.info("Starting model evaluation...")
     model.eval()
 
-    _, acc = model.eval_loop(test_loader)
+    _, acc, stats_df = model.eval_loop(test_loader)
+
+    stats_df.to_csv(experiment_config.SAVE_DIR / "evaluation_stats.csv")
 
     return acc
 

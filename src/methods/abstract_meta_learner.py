@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 from loguru import logger
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 
@@ -121,6 +122,43 @@ class AbstractMetaLearner(nn.Module):
         top1_correct = float((topk_labels[:, 0] == query_labels).sum())
         return float(top1_correct) / len(query_labels)
 
+    @staticmethod
+    def get_task_perf(
+        task_id, classification_scores, labels, class_ids, source_id, target_id
+    ):
+        """
+        Records the classification results for each query instance.
+        Args:
+            task_id (int): index of the task
+            classification_scores (torch.Tensor): predicted classification scores
+            labels (torch.Tensor): ground truth labels
+            class_ids (list[int]): indices of the classes composing the current classification task
+            source_id (int): index of the source domain for this task
+            target_id (int): index of the target domain for this task
+
+        Returns:
+            pd.DataFrame: for each query, gives current task id, source and target domain,
+                ground truth label, and the id and classification score for each class
+                composing the task
+        """
+        return (
+            pd.DataFrame(
+                {
+                    f"class_{i}_score": classification_scores[:, i]
+                    for i in range(len(class_ids))
+                }
+            )
+            .assign(
+                **{f"class_{i}_id": class_id for i, class_id in enumerate(class_ids)}
+            )
+            .assign(
+                true_label=[class_ids[label] for label in labels],
+                task_id=task_id,
+                source_domain=source_id,
+                target_domain=target_id,
+            )
+        )
+
     def train_loop(self, epoch, train_loader, optimizer):
         """
         Executes one training epoch
@@ -177,10 +215,12 @@ class AbstractMetaLearner(nn.Module):
             test_loader (DataLoader): loader of a given number of episodes
 
         Returns:
-            tuple(float, float): resp. average loss and classification accuracy
+            tuple(float, float, pd.DataFrame): resp. average loss and classification accuracy,
+                and advanced evaluation statistics
         """
         acc_all = []
         loss_all = []
+        evaluation_stats = []
 
         n_tasks = len(test_loader)
         for episode_index, (
@@ -198,10 +238,22 @@ class AbstractMetaLearner(nn.Module):
                 support_images, support_labels, query_images, query_labels
             )
 
+            evaluation_stats.append(
+                self.get_task_perf(
+                    episode_index,
+                    scores.cpu().detach(),
+                    query_labels.cpu().detach(),
+                    class_ids,
+                    source_domain,
+                    target_domain,
+                )
+            )
+
             loss_all.append(loss.item())
 
             acc_all.append(self.evaluate(scores, query_labels) * 100)
 
+        evaluations_stats_df = pd.concat(evaluation_stats, ignore_index=True)
         acc_all = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std = np.std(acc_all)
@@ -210,4 +262,4 @@ class AbstractMetaLearner(nn.Module):
             % (n_tasks, acc_mean, confidence_interval(acc_std, n_tasks))
         )
 
-        return np.asarray(loss_all).mean(), acc_mean
+        return np.asarray(loss_all).mean(), acc_mean, evaluations_stats_df

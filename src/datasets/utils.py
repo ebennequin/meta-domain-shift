@@ -42,6 +42,6 @@ def episodic_collate_fn(input_data):
         images_target,
         labels_target,
         true_class_ids,
-        source,
-        target,
+        int(source),
+        int(target),
     )
