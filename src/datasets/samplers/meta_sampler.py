@@ -8,7 +8,7 @@ from torch.utils.data import Sampler
 class MetaSampler(Sampler):
     def __init__(self, dataset, n_way, n_source, n_target, n_episodes):
         self.n_perturbations = len(dataset.perturbations)
-        self.n_total_images = len(dataset.data)
+        self.n_total_images = len(dataset.images)
         self.n_way = n_way
         self.n_source = n_source
         self.n_target = n_target
@@ -16,7 +16,7 @@ class MetaSampler(Sampler):
 
         self.items_per_label = {}
 
-        for item, label in enumerate(dataset.targets):
+        for item, label in enumerate(dataset.labels):
             if label in self.items_per_label.keys():
                 self.items_per_label[label].append(item)
             else:

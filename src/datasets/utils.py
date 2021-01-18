@@ -1,4 +1,8 @@
+from functools import partial
+
 import torch
+
+from src.datasets.perturbations import PERTURBATIONS
 
 
 def episodic_collate_fn(input_data):
@@ -45,3 +49,39 @@ def episodic_collate_fn(input_data):
         int(source),
         int(target),
     )
+
+
+def get_perturbations(perturbation_specs, perturbation_params, image_size):
+    """
+    Retrieve perturbation function from dataset specs.
+    Args:
+        perturbation_specs (dict): keys must belong to the keys of PERTURBATIONS,
+            values are lists of integers
+        perturbation_params (dict): keys are exactly the keys of PERTURBATIONS,
+            values are lists where each element is a possible additional parameter for a perturbation
+        image_size (int): expected image size
+
+    Returns:
+        tuple(list, dict): respectively:
+            - list of partial functions of perturbations, where the severity is already set
+            - dictionary associating any integer id to the name of the corresponding perturbation
+                in the previous list
+
+    """
+    perturbations = []
+    id_to_domain_list = []
+    for perturbation_name, severities in perturbation_specs.items():
+        for severity in severities:
+            perturbations.append(
+                partial(
+                    PERTURBATIONS[perturbation_name],
+                    severity_params=perturbation_params[perturbation_name][
+                        severity - 1
+                    ],
+                    image_size=image_size,
+                )
+            )
+            id_to_domain_list.append(f"{perturbation_name} {severity}")
+    id_to_domain = dict(enumerate(id_to_domain_list))
+
+    return perturbations, id_to_domain

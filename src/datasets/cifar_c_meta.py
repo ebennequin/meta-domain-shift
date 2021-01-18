@@ -1,7 +1,6 @@
 from functools import partial
 import json
 import os
-from pathlib import Path
 from PIL import Image
 import pickle
 from typing import Any, Callable, Optional
@@ -9,8 +8,9 @@ from typing import Any, Callable, Optional
 import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
 
-from src.datasets.perturbations import PERTURBATIONS
+from configs.dataset_specs.cifar_100_c.perturbation_params import PERTURBATION_PARAMS
 from src.datasets.transform import TransformLoader
+from src.datasets.utils import get_perturbations
 
 
 class CIFAR100CMeta(CIFAR100):
@@ -54,8 +54,8 @@ class CIFAR100CMeta(CIFAR100):
         }
         self.id_to_class = {v: k for k, v in self.class_to_idx.items()}
 
-        self.data: Any = []
-        self.targets = []
+        self.images: Any = []
+        self.labels = []
 
         # now load the picked numpy arrays
         for file_name, checksum in downloaded_list:
@@ -67,34 +67,28 @@ class CIFAR100CMeta(CIFAR100):
                     for item in range(len(entry["data"]))
                     if entry["fine_labels"][item] in split_class_idx
                 ]
-                self.data.append([entry["data"][item] for item in items_to_keep])
-                self.targets.extend(
+                self.images.append([entry["data"][item] for item in items_to_keep])
+                self.labels.extend(
                     [entry["fine_labels"][item] for item in items_to_keep]
                 )
 
-        self.data = np.vstack(self.data).reshape(-1, 3, 32, 32)
-        self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
+        self.images = np.vstack(self.images).reshape(-1, 3, 32, 32)
+        self.images = self.images.transpose((0, 2, 3, 1))  # convert to HWC
 
-        self.perturbations = []
-        id_to_domain_list = []
-        for perturbation_name, severities in self.split_specs["perturbations"].items():
-            for severity in severities:
-                self.perturbations.append(
-                    partial(PERTURBATIONS[perturbation_name], severity=severity)
-                )
-                id_to_domain_list.append(f"{perturbation_name} {severity}")
-        self.id_to_domain = dict(enumerate(id_to_domain_list))
+        self.perturbations, self.id_to_domain = get_perturbations(
+            self.split_specs["perturbations"], PERTURBATION_PARAMS, image_size
+        )
 
     def __len__(self):
-        return len(self.data) * len(self.perturbations)
+        return len(self.images) * len(self.perturbations)
 
     def __getitem__(self, item):
         original_data_index = item // len(self.perturbations)
         perturbation_index = item % len(self.perturbations)
 
-        img, target = (
-            Image.fromarray(self.data[original_data_index]),
-            self.targets[original_data_index],
+        img, label = (
+            Image.fromarray(self.images[original_data_index]),
+            self.labels[original_data_index],
         )
 
         img = self.perturbations[perturbation_index](img)
@@ -107,6 +101,6 @@ class CIFAR100CMeta(CIFAR100):
             img = self.transform(img)
 
         if self.target_transform is not None:
-            target = self.target_transform(target)
+            label = self.target_transform(label)
 
-        return img, target, perturbation_index
+        return img, label, perturbation_index
