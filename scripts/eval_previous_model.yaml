@@ -27,4 +27,4 @@ run:
     # Allow to access the mounted output_folder as if it was in ./output
     - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
     # Run the experiment
-    - python -m scripts.eval_model --model-path=/output/sicara/meta-domain-shift/experiments/14/results/best_model.tar
+    - python -m scripts.eval_model --model-path=/output/sicara/meta-domain-shift/groups/13/191/results/best_model.tar

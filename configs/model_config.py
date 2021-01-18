@@ -5,8 +5,8 @@ from src.methods import *
 
 # Parameters of the model (method and feature extractor)
 
-# MODEL = ProtoNet
 BACKBONE = Conv4
+# MODEL = ProtoNet
 MODEL = partial(
     PrototypicalOptimalTransport,
     # OptimalTransport,
