@@ -15,8 +15,6 @@ from scipy.ndimage.interpolation import map_coordinates
 from wand.image import Image as WandImage
 from wand.api import library as wandlibrary
 
-# All distortion here expect inputs as PIL images of shape 32*32
-# TODO: let them be agnostic of image width and height
 
 # /////////////// Distortion Helpers ///////////////
 
@@ -242,7 +240,8 @@ def frost(x, severity_params, image_size):
     while True:
         try:
             frost = cv2.imread(filename)
-            frost = cv2.resize(frost, (0, 0), fx=0.2, fy=0.2)
+            if image_size <= 32:
+                frost = cv2.resize(frost, (0, 0), fx=0.2, fy=0.2)
             break
         except cv2.error:
             logger.warning(
