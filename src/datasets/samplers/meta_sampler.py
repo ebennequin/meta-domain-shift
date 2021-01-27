@@ -7,7 +7,7 @@ from torch.utils.data import Sampler
 
 class MetaSampler(Sampler):
     def __init__(self, dataset, n_way, n_source, n_target, n_episodes):
-        self.n_perturbations = len(dataset.perturbations)
+        self.n_domains = len(dataset.id_to_domain)
         self.n_total_images = len(dataset.images)
         self.n_way = n_way
         self.n_source = n_source
@@ -27,9 +27,7 @@ class MetaSampler(Sampler):
 
     def _get_episode_items(self):
         labels = random.sample(self.items_per_label.keys(), self.n_way)
-        source_perturbation, target_perturbation = torch.randperm(self.n_perturbations)[
-            :2
-        ]
+        source_perturbation, target_perturbation = torch.randperm(self.n_domains)[:2]
 
         source_items = (
             torch.cat(
@@ -40,7 +38,7 @@ class MetaSampler(Sampler):
                     for label in labels
                 ]
             )
-            * self.n_perturbations
+            * self.n_domains
             + source_perturbation
         )
         target_items = (
@@ -52,7 +50,7 @@ class MetaSampler(Sampler):
                     for label in labels
                 ]
             )
-            * self.n_perturbations
+            * self.n_domains
             + target_perturbation
         )
 
