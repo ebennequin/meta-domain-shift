@@ -41,8 +41,6 @@ def main(input_dir, output_dir):
             this_output_dir.mkdir(parents=True, exist_ok=True)
             trans(x[0]).save(this_output_dir / f"{i:08d}.png", format="PNG")
 
-            if i > 100:
-                break
         logger.info(f"{setname} set has been written.")
 
     save_set(train_set, "train")
