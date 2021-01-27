@@ -76,14 +76,18 @@ class OptimalTransport(AbstractMetaLearner):
 
         return logprobs
 
-    def set_forward_loss(
-        self, support_images, support_labels, query_images, query_labels
+    def fit_on_task(
+        self, support_images, support_labels, query_images, query_labels, optimizer
     ):
         """
         Overwrites method set_forward_loss in AbstractMetaLearner.
         """
+        optimizer.zero_grad()
         logprobs, cost = self.execute(support_images, support_labels, query_images)
 
         loss = self.get_loss(query_labels, logprobs, cost)
 
-        return logprobs, loss
+        loss.backward()
+        optimizer.step()
+
+        return logprobs.detach(), loss.detach().item()

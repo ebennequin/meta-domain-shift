@@ -1,3 +1,5 @@
+import torch
+
 from src.running_steps import (
     train_model,
     eval_model,
@@ -15,5 +17,6 @@ if __name__ == "__main__":
     set_and_print_random_seed()
 
     trained_model = train_model()
+    torch.cuda.empty_cache()
 
     eval_model(trained_model)

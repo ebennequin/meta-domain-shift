@@ -60,18 +60,8 @@ class TieredImageNetC(VisionDataset):
             img = Image.fromarray(img)
         img = transforms.ToTensor()(img).type(torch.float32)
 
-        # img = ToTensor(self.perturbations[perturbation_index](
-        #     self.transform(Image.open(self.images[original_data_index]).convert('RGB'))
-        # ))
         assert img.dtype == torch.float32, self.perturbations[perturbation_index]
         assert img.shape == torch.Size([3, 224, 224])
-
-        # if self.transform is not None:
-        #     # TODO: some perturbations output arrays, some output images. We need to clean that.
-        #     if isinstance(img, np.ndarray):
-        #         img = img.astype(np.uint8)
-        #         img = Image.fromarray(img)
-        #     img = self.transform(img)
 
         if self.target_transform is not None:
             label = self.target_transform(label)
