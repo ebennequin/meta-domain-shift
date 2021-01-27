@@ -3,6 +3,7 @@ from functools import partial
 import torch
 
 from src.datasets.perturbations import PERTURBATIONS
+from src.utils import clean_name
 
 
 def episodic_collate_fn(input_data):
@@ -81,7 +82,7 @@ def get_perturbations(perturbation_specs, perturbation_params, image_size):
                     image_size=image_size,
                 )
             )
-            id_to_domain_list.append(f"{perturbation_name} {severity}")
+            id_to_domain_list.append(f"{clean_name(perturbation_name)}_{severity}")
     id_to_domain = dict(enumerate(id_to_domain_list))
 
     return perturbations, id_to_domain

@@ -18,10 +18,8 @@ hptuning:
       values: [1, 5]
     n_target:
       values: [8, 16]
-#    lambda_cost:
-#      values: [0.0, 0.001, 0.01, 0.1, 1.0]
     random_seed:
-      values: [1, 2, 3, 4, 5, 6]
+      values: [1, 2]
 
 build:
   image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel

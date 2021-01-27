@@ -1,3 +1,5 @@
+import re
+
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
@@ -32,3 +34,7 @@ def plot_episode(support_images, query_images):
     plt.title("query images")
     matplotlib_imshow(query_grid)
     plt.show()
+
+
+def clean_name(name, banned_characters="[^A-Za-z0-9]+", fill_item="_"):
+    return re.sub(banned_characters, fill_item, name)
