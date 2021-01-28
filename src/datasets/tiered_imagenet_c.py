@@ -48,8 +48,8 @@ class TieredImageNetC(VisionDataset):
         )
         self.domain_to_id = {v: k for k, v in self.id_to_domain.items()}
 
-        self.use_corrupted_images = load_corrupted_dataset
-        if self.use_corrupted_images:
+        self.load_corrupted_dataset = load_corrupted_dataset
+        if self.load_corrupted_dataset:
             self.images_df = (
                 pd.DataFrame(
                     [
@@ -86,7 +86,7 @@ class TieredImageNetC(VisionDataset):
     def __getitem__(self, item):
         label, domain_id, img_name = self.images_df.loc[item]
 
-        if self.use_corrupted_images:
+        if self.load_corrupted_dataset:
             img = self.transform(
                 Image.open(
                     self.root
