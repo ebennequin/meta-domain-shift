@@ -1,13 +1,16 @@
 import json
 from pathlib import Path
 
+import os
 import torch
 from PIL import Image
 from typing import Callable, Optional
 
 import numpy as np
+import pandas as pd
 from torchvision.datasets import VisionDataset
 from torchvision import transforms
+from tqdm import tqdm
 
 from configs.dataset_specs.tiered_imagenet_c.perturbation_params import (
     PERTURBATION_PARAMS,
@@ -23,6 +26,7 @@ class TieredImageNetC(VisionDataset):
         split: str,
         image_size: int,
         target_transform: Optional[Callable] = None,
+        load_corrupted_dataset=True,
     ):
         transform = TransformLoader(image_size).get_composed_transform(aug=False)
         super(TieredImageNetC, self).__init__(
@@ -37,38 +41,75 @@ class TieredImageNetC(VisionDataset):
         self.root = Path(root)
         self.class_list = split_specs["class_names"]
         self.id_to_class = dict(enumerate(self.class_list))
-        self.images, self.labels = self.get_images_and_labels()
+        self.class_to_id = {v: k for k, v in self.id_to_class.items()}
 
         self.perturbations, self.id_to_domain = get_perturbations(
             split_specs["perturbations"], PERTURBATION_PARAMS, image_size
         )
+        self.domain_to_id = {v: k for k, v in self.id_to_domain.items()}
+
+        self.load_corrupted_dataset = load_corrupted_dataset
+        if self.load_corrupted_dataset:
+            self.images_df = (
+                pd.DataFrame(
+                    [
+                        [
+                            self.class_to_id[img_path.parts[-3]],
+                            self.domain_to_id[img_path.parts[-2]],
+                            img_path.parts[-1],
+                        ]
+                        for img_path in tqdm(self.root.glob("*/*/*.png"))
+                    ],
+                    columns=["class_id", "domain_id", "img_name"],
+                )
+                .sort_values(by=["class_id", "img_name", "domain_id"])
+                .reset_index(drop=True)
+            )
+        else:
+            self.images, self.labels = self.get_images_and_labels()
+            self.images_df = pd.DataFrame(
+                {
+                    "label": self.labels,
+                    "img_name": [os.path.basename(x) for x in self.images],
+                    "key": 1,
+                }
+            ).merge(
+                pd.DataFrame({"domain_id": list(self.id_to_domain.keys()), "key": 1}),
+                on="key",
+            )[
+                ["label", "domain_id", "img_name"]
+            ]
 
     def __len__(self):
-        return len(self.labels) * len(self.perturbations)
+        return len(self.images_df)
 
     def __getitem__(self, item):
-        original_data_index = item // len(self.perturbations)
-        perturbation_index = item % len(self.perturbations)
+        label, domain_id, img_name = self.images_df.loc[item]
 
-        label = self.labels[original_data_index]
-
-        img = Image.open(self.images[original_data_index]).convert("RGB")
-        img = transforms.Resize((224, 224))(img)
-        img = self.perturbations[perturbation_index](img)
-        if isinstance(img, np.ndarray):
-            img = img.astype(np.uint8)
-            img = Image.fromarray(img)
-        img = transforms.ToTensor()(img).type(torch.float32)
-
-        assert img.dtype == torch.float32, self.perturbations[perturbation_index]
-        assert img.shape == torch.Size([3, 224, 224])
+        if self.load_corrupted_dataset:
+            img = self.transform(
+                Image.open(
+                    self.root
+                    / self.id_to_class[label]
+                    / self.id_to_domain[domain_id]
+                    / img_name
+                )
+            )
+        else:
+            img = Image.open(self.root / self.id_to_class[label] / img_name).convert(
+                "RGB"
+            )
+            img = transforms.Resize((224, 224))(img)
+            img = self.perturbations[domain_id](img)
+            if isinstance(img, np.ndarray):
+                img = img.astype(np.uint8)
+                img = Image.fromarray(img)
+            img = transforms.ToTensor()(img).type(torch.float32)
 
         if self.target_transform is not None:
             label = self.target_transform(label)
 
-        assert img.max() < 1.5, self.id_to_domain[int(perturbation_index)]
-
-        return img, label, perturbation_index
+        return img, label, domain_id
 
     def get_images_and_labels(self):
         """
