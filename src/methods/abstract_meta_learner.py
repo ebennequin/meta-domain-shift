@@ -15,7 +15,7 @@ class AbstractMetaLearner(nn.Module):
     Abstract class for meta-learning models. Extensions of this class must define the set_forward function.
     """
 
-    def __init__(self, model_func, training_stats=None):
+    def __init__(self, model_func, transportation=None, training_stats=None):
         """
 
         Args:
@@ -27,6 +27,7 @@ class AbstractMetaLearner(nn.Module):
         self.feature = model_func()
         self.training_stats = training_stats
         self.loss_fn = nn.CrossEntropyLoss()
+        self.transportation_module = transportation
 
     @abstractmethod
     def set_forward(self, support_images, support_labels, query_images):
