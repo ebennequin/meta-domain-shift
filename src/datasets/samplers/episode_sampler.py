@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Sampler
 
 
-class MetaSampler(Sampler):
+class EpisodeSampler(Sampler):
     def __init__(self, dataset, n_way, n_source, n_target, n_episodes):
         self.n_domains = len(dataset.id_to_domain)
         self.n_total_images = len(dataset.images)
