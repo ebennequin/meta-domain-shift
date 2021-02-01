@@ -1,5 +1,3 @@
-import re
-
 from matplotlib import pyplot as plt
 import numpy as np
 import torch
@@ -41,10 +39,6 @@ def plot_episode(support_images, query_images):
     plt.show()
 
 
-def clean_name(name, banned_characters="[^A-Za-z0-9]+", fill_item="_"):
-    return re.sub(banned_characters, fill_item, name)
-
-
 def elucidate_ids(df, dataset):
     """
     Retrieves explicit class and domain names in dataset from their integer index,
@@ -65,7 +59,9 @@ def elucidate_ids(df, dataset):
     )
 
 
-def get_episodic_loader(split: str, n_way: int, n_source: int, n_target: int, n_episodes: int):
+def get_episodic_loader(
+    split: str, n_way: int, n_source: int, n_target: int, n_episodes: int
+):
     dataset = dataset_config.DATASET(
         dataset_config.DATA_ROOT, split, dataset_config.IMAGE_SIZE
     )

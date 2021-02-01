@@ -353,7 +353,7 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-        self.final_feat_dim = 1600  # I obseverd that final feat dim is actually 256, I don't know what this is for.
+        self.final_feat_dim = 256
 
     def forward(self, x):
         out = self.trunk(x)
@@ -469,28 +469,16 @@ class ResNet(nn.Module):
         return out
 
 
-def Conv4():
-    return ConvNet(4)
+def Conv4(flatten=True):
+    return ConvNet(4, flatten=flatten)
 
 
-def Conv6():
-    return ConvNet(6)
+def Conv6(flatten=True):
+    return ConvNet(6, flatten=flatten)
 
 
-def Conv4NP():
-    return ConvNetNopool(4)
-
-
-def Conv6NP():
-    return ConvNetNopool(6)
-
-
-def Conv4S():
-    return ConvNetS(4)
-
-
-def Conv4SNP():
-    return ConvNetSNopool(4)
+def Conv4S(flatten=True):
+    return ConvNetS(4, flatten=flatten)
 
 
 def ResNet10(flatten=True):

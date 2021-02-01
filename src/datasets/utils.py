@@ -1,9 +1,10 @@
+import re
+
 from functools import partial
 
 import torch
 
 from src.datasets.perturbations import PERTURBATIONS
-from src.utils import clean_name
 
 
 def episodic_collate_fn(input_data):
@@ -86,3 +87,7 @@ def get_perturbations(perturbation_specs, perturbation_params, image_size):
     id_to_domain = dict(enumerate(id_to_domain_list))
 
     return perturbations, id_to_domain
+
+
+def clean_name(name, banned_characters="[^A-Za-z0-9]+", fill_item="_"):
+    return re.sub(banned_characters, fill_item, name)
