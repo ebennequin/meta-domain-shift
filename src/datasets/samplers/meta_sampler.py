@@ -39,7 +39,8 @@ class MetaSampler(Sampler):
             torch.cat(
                 [
                     torch.tensor(
-                        get_rand_item(self.items_per_label[label], self.n_source)
+                        self.items_per_label[label] if self.n_source == -1 \
+                            else random.sample(self.items_per_label[label], self.n_source)
                     )
                     for label in labels
                 ]
@@ -52,7 +53,8 @@ class MetaSampler(Sampler):
             torch.cat(
                 [
                     torch.tensor(
-                        get_rand_item(self.items_per_label[label], self.n_target)
+                        self.items_per_label[label] if self.n_target == -1 \
+                            else random.sample(self.items_per_label[label], self.n_target)
                     )
                     for label in labels
                 ]

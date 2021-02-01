@@ -13,7 +13,7 @@ class UnsupDomAdapOT(AbstractMetaLearner):
         """
 
         support_query_size = len(support_images)
-        n_chunks = int(support_query_size / 32) + 1
+        n_chunks = support_query_size // 32 + 1
 
         support_chunk = []
         query_chunk = []
@@ -36,10 +36,14 @@ class UnsupDomAdapOT(AbstractMetaLearner):
             dim=0
         )
 
+        del support_chunk
+
         z_query = torch.cat(
             query_chunk,
             dim=0
         )
+        
+        del query_chunk
         
         # If a transportation method in the feature space has been defined, use it
         if self.transportation_module:
