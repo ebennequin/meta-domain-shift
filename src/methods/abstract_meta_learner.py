@@ -84,15 +84,9 @@ class AbstractMetaLearner(nn.Module):
         support_images = set_device(support_images)
         query_images = set_device(query_images)
 
-        # Concatenate tensors and compute images features
-        number_of_support_images = support_images.shape[0]
-        all_images = torch.cat((support_images, query_images))
-        z_all = self.feature.forward(all_images)
-
-        # Re-split between support and query images
-        z_support = z_all[:number_of_support_images]
-        z_query = z_all[number_of_support_images:]
-
+        z_support = self.feature.forward(support_images)
+        z_query = self.feature.forward(query_images)
+        
         return z_support, z_query
 
     @staticmethod
