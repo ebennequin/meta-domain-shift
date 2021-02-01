@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from distutils.dir_util import copy_tree
 from pathlib import Path
 import random
@@ -141,9 +142,14 @@ def train_model():
     return model
 
 
-def load_model(state_path: Path):
+def load_model(state_path: Path, episodic: bool):
     model = set_device(model_config.MODEL(model_config.BACKBONE))
-    model.load_state_dict(torch.load(state_path))
+    state_dict = torch.load(state_path)
+    if not episodic:
+        state_dict = OrderedDict(
+            [(f"feature.{k}", v) for k, v in state_dict.items() if ".fc." not in k]
+        )
+    model.load_state_dict(state_dict)
     logger.info(f"Loaded model from {state_path}")
 
     return model

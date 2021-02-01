@@ -26,7 +26,7 @@ class TieredImageNetC(VisionDataset):
         split: str,
         image_size: int,
         target_transform: Optional[Callable] = None,
-        load_corrupted_dataset=True,
+        load_corrupted_dataset=False,
     ):
         transform = TransformLoader(image_size).get_composed_transform(aug=False)
         super(TieredImageNetC, self).__init__(
