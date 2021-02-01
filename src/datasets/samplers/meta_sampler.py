@@ -29,11 +29,18 @@ class MetaSampler(Sampler):
         labels = random.sample(self.items_per_label.keys(), self.n_way)
         source_perturbation, target_perturbation = torch.randperm(self.n_domains)[:2]
 
+        def get_rand_item(item, n):
+            if n == -1: 
+                return item
+            else: 
+                return random.sample(item, n)
+
         source_items = (
             torch.cat(
                 [
                     torch.tensor(
-                        random.sample(self.items_per_label[label], self.n_source)
+                        self.items_per_label[label] if self.n_source == -1 \
+                            else random.sample(self.items_per_label[label], self.n_source)
                     )
                     for label in labels
                 ]
@@ -41,11 +48,13 @@ class MetaSampler(Sampler):
             * self.n_domains
             + source_perturbation
         )
+
         target_items = (
             torch.cat(
                 [
                     torch.tensor(
-                        random.sample(self.items_per_label[label], self.n_target)
+                        self.items_per_label[label] if self.n_target == -1 \
+                            else random.sample(self.items_per_label[label], self.n_target)
                     )
                     for label in labels
                 ]
