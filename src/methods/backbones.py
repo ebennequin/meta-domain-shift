@@ -8,6 +8,8 @@ from torch.nn.utils.weight_norm import WeightNorm
 
 from src.utils import set_device
 
+from configs.model_config import BATCHNORM
+
 
 def init_layer(L):
     # Initialization using fan-in
@@ -161,7 +163,7 @@ class ConvBlock(nn.Module):
             self.BN = BatchNorm2d_fw(outdim)
         else:
             self.C = nn.Conv2d(indim, outdim, 3, padding=padding)
-            self.BN = nn.BatchNorm2d(outdim)
+            self.BN = BATCHNORM(outdim)
         self.relu = nn.ReLU(inplace=True)
 
         self.parametrized_layers = [self.C, self.BN, self.relu]
@@ -427,20 +429,14 @@ class ConvNetSNopool(
 
 
 class ResNet(nn.Module):
-    maml = False  # Default
-
     def __init__(self, block, list_of_num_layers, list_of_out_dims, flatten=True):
         # list_of_num_layers specifies number of layers in each stage
         # list_of_out_dims specifies number of output channel for each stage
         super(ResNet, self).__init__()
         assert len(list_of_num_layers) == 4, "Can have only four stages"
-        if self.maml:
-            conv1 = Conv2d_fw(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
-            bn1 = BatchNorm2d_fw(64)
-        else:
-            conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
-            bn1 = nn.BatchNorm2d(64)
-
+            
+        conv1 = Conv2d_fw(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        bn1 = BATCHNORM(64)
         relu = nn.ReLU()
         pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
