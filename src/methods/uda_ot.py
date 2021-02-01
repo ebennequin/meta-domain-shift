@@ -23,9 +23,12 @@ class UnsupDomAdapOT(AbstractMetaLearner):
             query_images.chunk(n_chunks)
             ):
 
-            support_features, query_features = self.extract_features(
-                set_device(support), 
-                set_device(query)
+            support_features, query_features = (
+                features.detach().cpu() 
+                for features in self.extract_features(
+                    set_device(support), 
+                    set_device(query)
+                    )
             )
 
             support_chunk.append(support_features.detach().cpu())
@@ -44,16 +47,18 @@ class UnsupDomAdapOT(AbstractMetaLearner):
         )
         
         del query_chunk
-        
+
         # If a transportation method in the feature space has been defined, use it
         if self.transportation_module:
-            z_support, z_query = self.transportation_module(
-                set_device(z_support), 
-                set_device(z_query)
-                )
+            z_support, z_query = (
+                z.cpu()
+                for z in self.transportation_module(
+                    set_device(z_support), 
+                    set_device(z_query)
+            )
 
-        z_support = z_support.cpu().numpy()
-        z_query = z_query.cpu().numpy()
+        z_support = z_support.numpy()
+        z_query = z_query.numpy()
         support_labels = support_labels.cpu().numpy()
 
         linear_classifier = RidgeClassifier(alpha=0.1)
@@ -65,3 +70,6 @@ class UnsupDomAdapOT(AbstractMetaLearner):
         
         scores = set_device(scores)
         return scores
+
+    def train_loop(self, epoch, train_loader, optimizer):
+        raise NotImplementedError('UDA-OT from Courty et al. does not support episodic training')
