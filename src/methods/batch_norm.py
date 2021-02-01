@@ -1,11 +1,10 @@
 from abc import abstractmethod
 
-from src.utils import set_device
-
 import torch
 from torch import nn
 import torch.nn.functional as F
 
+from src.utils import set_device
 
 ConventionalBatchNorm = nn.BatchNorm2d
 
@@ -49,7 +48,9 @@ class NormalizationLayer(nn.BatchNorm2d):
         :param var: var used to normalize
         :return: normalized activations
         """
-        return (self.weight.view(1, -1, 1, 1) * (x - mean) / torch.sqrt(var + self.eps)) + self.bias.view(1, -1, 1, 1)
+        return (
+            self.weight.view(1, -1, 1, 1) * (x - mean) / torch.sqrt(var + self.eps)
+        ) + self.bias.view(1, -1, 1, 1)
 
     @staticmethod
     def _compute_batch_moments(x):
@@ -58,7 +59,9 @@ class NormalizationLayer(nn.BatchNorm2d):
         :param x: input activations
         :return: batch mean, batch variance
         """
-        return torch.mean(x, dim=(0, 2, 3), keepdim=True), torch.var(x, dim=(0, 2, 3), keepdim=True)
+        return torch.mean(x, dim=(0, 2, 3), keepdim=True), torch.var(
+            x, dim=(0, 2, 3), keepdim=True
+        )
 
     @staticmethod
     def _compute_instance_moments(x):
@@ -67,7 +70,9 @@ class NormalizationLayer(nn.BatchNorm2d):
         :param x: input activations
         :return: instance mean, instance variance
         """
-        return torch.mean(x, dim=(2, 3), keepdim=True), torch.var(x, dim=(2, 3), keepdim=True)
+        return torch.mean(x, dim=(2, 3), keepdim=True), torch.var(
+            x, dim=(2, 3), keepdim=True
+        )
 
     @staticmethod
     def _compute_layer_moments(x):
@@ -76,7 +81,9 @@ class NormalizationLayer(nn.BatchNorm2d):
         :param x: input activations
         :return: layer mean, layer variance
         """
-        return torch.mean(x, dim=(1, 2, 3), keepdim=True), torch.var(x, dim=(1, 2, 3), keepdim=True)
+        return torch.mean(x, dim=(1, 2, 3), keepdim=True), torch.var(
+            x, dim=(1, 2, 3), keepdim=True
+        )
 
     @staticmethod
     def _compute_pooled_moments(x, alpha, batch_mean, batch_var, augment_moment_fn):
@@ -93,13 +100,15 @@ class NormalizationLayer(nn.BatchNorm2d):
         pooled_mean = alpha * batch_mean + (1.0 - alpha) * augment_mean
         batch_mean_diff = batch_mean - pooled_mean
         augment_mean_diff = augment_mean - pooled_mean
-        pooled_var = alpha * (batch_var + (batch_mean_diff * batch_mean_diff)) +\
-                     (1.0 - alpha) * (augment_var + (augment_mean_diff * augment_mean_diff))
+        pooled_var = alpha * (batch_var + (batch_mean_diff * batch_mean_diff)) + (
+            1.0 - alpha
+        ) * (augment_var + (augment_mean_diff * augment_mean_diff))
         return pooled_mean, pooled_var
 
 
 class TaskNormBase(NormalizationLayer):
     """TaskNorm base class."""
+
     def __init__(self, num_features, **kwargs):
         """
         Initialize
@@ -121,18 +130,32 @@ class TaskNormBase(NormalizationLayer):
         # for calculating alpha as a function of context size.
         scale = torch.Tensor([0.0]).to(device)
         offset = torch.Tensor([0.0]).to(device)
-        self.register_parameter(name='scale', param=torch.nn.Parameter(scale, requires_grad=True))
-        self.register_parameter(name='offset', param=torch.nn.Parameter(offset, requires_grad=True))
+        self.register_parameter(
+            name="scale", param=torch.nn.Parameter(scale, requires_grad=True)
+        )
+        self.register_parameter(
+            name="offset", param=torch.nn.Parameter(offset, requires_grad=True)
+        )
 
         # Variables to store the context moments to use for normalizing the target.
-        self.register_buffer(name='batch_mean',
-                             tensor=torch.zeros((1, self.num_features, 1, 1), requires_grad=True, device=device))
-        self.register_buffer(name='batch_var',
-                             tensor=torch.ones((1, self.num_features, 1, 1), requires_grad=True, device=device))
+        self.register_buffer(
+            name="batch_mean",
+            tensor=torch.zeros(
+                (1, self.num_features, 1, 1), requires_grad=True, device=device
+            ),
+        )
+        self.register_buffer(
+            name="batch_var",
+            tensor=torch.ones(
+                (1, self.num_features, 1, 1), requires_grad=True, device=device
+            ),
+        )
 
         # Variable to save the context size.
-        self.register_buffer(name='context_size',
-                             tensor=torch.zeros((1), requires_grad=False, device=device))
+        self.register_buffer(
+            name="context_size",
+            tensor=torch.zeros((1), requires_grad=False, device=device),
+        )
 
     def _get_augment_moment_fn(self):
         """
@@ -147,19 +170,30 @@ class TaskNormBase(NormalizationLayer):
         :param x: input activations
         :return: normalized activations
         """
-        if self.training:  # compute the pooled moments for the context and save off the moments and context size
-            alpha = self.sigmoid(self.scale * (x.size())[0] + self.offset)  # compute alpha with context size
+        if (
+            self.training
+        ):  # compute the pooled moments for the context and save off the moments and context size
+            alpha = self.sigmoid(
+                self.scale * (x.size())[0] + self.offset
+            )  # compute alpha with context size
             batch_mean, batch_var = self._compute_batch_moments(x)
-            pooled_mean, pooled_var = self._compute_pooled_moments(x, alpha, batch_mean, batch_var,
-                                                                   self._get_augment_moment_fn())
+            pooled_mean, pooled_var = self._compute_pooled_moments(
+                x, alpha, batch_mean, batch_var, self._get_augment_moment_fn()
+            )
             self.context_batch_mean = batch_mean
             self.context_batch_var = batch_var
             self.context_size = torch.full_like(self.context_size, x.size()[0])
         else:  # compute the pooled moments for the target
-            alpha = self.sigmoid(self.scale * self.context_size + self.offset)  # compute alpha with saved context size
-            pooled_mean, pooled_var = self._compute_pooled_moments(x, alpha, self.context_batch_mean,
-                                                                   self.context_batch_var,
-                                                                   self._get_augment_moment_fn())
+            alpha = self.sigmoid(
+                self.scale * self.context_size + self.offset
+            )  # compute alpha with saved context size
+            pooled_mean, pooled_var = self._compute_pooled_moments(
+                x,
+                alpha,
+                self.context_batch_mean,
+                self.context_batch_var,
+                self._get_augment_moment_fn(),
+            )
 
         return self._normalize(x, pooled_mean, pooled_var)  # normalize
 
@@ -168,6 +202,7 @@ class TaskNormI(TaskNormBase):
     """
     TaskNorm-I normalization layer. Just need to override the augment moment function with 'instance'.
     """
+
     def _get_augment_moment_fn(self):
         """
         Override the base class to get the function to compute instance moments.

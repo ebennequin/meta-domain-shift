@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import torch
 from torch.utils.data import Sampler
 
@@ -16,6 +15,7 @@ class EpisodeSampler(Sampler):
 
         self.items_per_label = {}
 
+        # TODO: ne va pas marcher pour TieredImageNet-C avec load_corrupted_images = True
         for item, label in enumerate(dataset.labels):
             if label in self.items_per_label.keys():
                 self.items_per_label[label].append(item)
@@ -25,23 +25,21 @@ class EpisodeSampler(Sampler):
     def __len__(self):
         return self.n_episodes
 
+    def _sample_instances_from_label(self, label, n_samples):
+        return torch.tensor(
+            self.items_per_label[label]
+            if n_samples == -1
+            else random.sample(self.items_per_label[label], n_samples)
+        )
+
     def _get_episode_items(self):
         labels = random.sample(self.items_per_label.keys(), self.n_way)
         source_perturbation, target_perturbation = torch.randperm(self.n_domains)[:2]
 
-        def get_rand_item(item, n):
-            if n == -1: 
-                return item
-            else: 
-                return random.sample(item, n)
-
         source_items = (
             torch.cat(
                 [
-                    torch.tensor(
-                        self.items_per_label[label] if self.n_source == -1 \
-                            else random.sample(self.items_per_label[label], self.n_source)
-                    )
+                    self._sample_instances_from_label(label, self.n_source)
                     for label in labels
                 ]
             )
@@ -52,10 +50,7 @@ class EpisodeSampler(Sampler):
         target_items = (
             torch.cat(
                 [
-                    torch.tensor(
-                        self.items_per_label[label] if self.n_target == -1 \
-                            else random.sample(self.items_per_label[label], self.n_target)
-                    )
+                    self._sample_instances_from_label(label, self.n_target)
                     for label in labels
                 ]
             )

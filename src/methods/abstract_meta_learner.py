@@ -86,7 +86,7 @@ class AbstractMetaLearner(nn.Module):
 
         z_support = self.feature.forward(support_images)
         z_query = self.feature.forward(query_images)
-        
+
         return z_support, z_query
 
     @staticmethod

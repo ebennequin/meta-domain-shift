@@ -6,9 +6,8 @@ import math
 import torch.nn.functional as F
 from torch.nn.utils.weight_norm import WeightNorm
 
-from src.utils import set_device
-
 from configs.model_config import BATCHNORM
+from src.utils import set_device
 
 
 def init_layer(L):
@@ -434,7 +433,7 @@ class ResNet(nn.Module):
         # list_of_out_dims specifies number of output channel for each stage
         super(ResNet, self).__init__()
         assert len(list_of_num_layers) == 4, "Can have only four stages"
-            
+
         conv1 = Conv2d_fw(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         bn1 = BATCHNORM(64)
         relu = nn.ReLU()

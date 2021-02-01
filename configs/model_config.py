@@ -1,9 +1,6 @@
 from functools import partial
 
 from src.methods.batch_norm import *
-
-BATCHNORM = TaskNormI
-
 from src.methods.backbones import *
 from src.methods import *
 
@@ -11,6 +8,8 @@ from src.methods import *
 
 # BACKBONE = ResNet34
 BACKBONE = Conv4
+
+BATCHNORM = TaskNormI
 
 MODEL = partial(
     ProtoNet,
