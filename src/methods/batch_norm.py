@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from src.utils import set_device
 
 import torch
@@ -29,18 +31,8 @@ class NormalizationLayer(nn.BatchNorm2d):
     Base class for all normalization layers.
     Derives from nn.BatchNorm2d to maintain compatibility with the pre-trained resnet-18.
     """
-    def __init__(self, num_features):
-        """
-        Initialize the class.
-        :param num_features: number of channels in the 2D convolutional layer
-        """
-        super(NormalizationLayer, self).__init__(
-            num_features,
-            eps=1e-05,
-            momentum=0.1,
-            affine=True,
-            track_running_stats=True)
 
+    @abstractmethod
     def forward(self, x):
         """
         Normalize activations.
@@ -108,12 +100,12 @@ class NormalizationLayer(nn.BatchNorm2d):
 
 class TaskNormBase(NormalizationLayer):
     """TaskNorm base class."""
-    def __init__(self, num_features):
+    def __init__(self, num_features, **kwargs):
         """
         Initialize
         :param num_features: number of channels in the 2D convolutional layer
         """
-        super(TaskNormBase, self).__init__(num_features)
+        super(TaskNormBase, self).__init__(num_features, **kwargs)
         self.register_extra_weights()  # see register_extra_weights (not in original code)
         self.sigmoid = torch.nn.Sigmoid()
 
@@ -127,10 +119,10 @@ class TaskNormBase(NormalizationLayer):
 
         # Initialize and register the learned parameters 'a' (SCALE) and 'b' (OFFSET)
         # for calculating alpha as a function of context size.
-        a = torch.Tensor([0.0]).to(device)
-        b = torch.Tensor([0.0]).to(device)
-        self.register_parameter(name='a', param=torch.nn.Parameter(a, requires_grad=True))
-        self.register_parameter(name='b', param=torch.nn.Parameter(b, requires_grad=True))
+        scale = torch.Tensor([0.0]).to(device)
+        offset = torch.Tensor([0.0]).to(device)
+        self.register_parameter(name='scale', param=torch.nn.Parameter(scale, requires_grad=True))
+        self.register_parameter(name='offset', param=torch.nn.Parameter(offset, requires_grad=True))
 
         # Variables to store the context moments to use for normalizing the target.
         self.register_buffer(name='batch_mean',
@@ -156,7 +148,7 @@ class TaskNormBase(NormalizationLayer):
         :return: normalized activations
         """
         if self.training:  # compute the pooled moments for the context and save off the moments and context size
-            alpha = self.sigmoid(self.a * (x.size())[0] + self.b)  # compute alpha with context size
+            alpha = self.sigmoid(self.scale * (x.size())[0] + self.offset)  # compute alpha with context size
             batch_mean, batch_var = self._compute_batch_moments(x)
             pooled_mean, pooled_var = self._compute_pooled_moments(x, alpha, batch_mean, batch_var,
                                                                    self._get_augment_moment_fn())
@@ -164,7 +156,7 @@ class TaskNormBase(NormalizationLayer):
             self.context_batch_var = batch_var
             self.context_size = torch.full_like(self.context_size, x.size()[0])
         else:  # compute the pooled moments for the target
-            alpha = self.sigmoid(self.a * self.context_size + self.b)  # compute alpha with saved context size
+            alpha = self.sigmoid(self.scale * self.context_size + self.offset)  # compute alpha with saved context size
             pooled_mean, pooled_var = self._compute_pooled_moments(x, alpha, self.context_batch_mean,
                                                                    self.context_batch_var,
                                                                    self._get_augment_moment_fn())
@@ -176,13 +168,6 @@ class TaskNormI(TaskNormBase):
     """
     TaskNorm-I normalization layer. Just need to override the augment moment function with 'instance'.
     """
-    def __init__(self, num_features):
-        """
-        Initialize
-        :param num_features: number of channels in the 2D convolutional layer
-        """
-        super(TaskNormI, self).__init__(num_features)
-
     def _get_augment_moment_fn(self):
         """
         Override the base class to get the function to compute instance moments.
