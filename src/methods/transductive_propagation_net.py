@@ -6,7 +6,8 @@ from src.methods.backbones import MultiLayerPerceptron
 
 
 class TransPropNet(AbstractMetaLearner):
-    def __init__(self, model_func, transportation=None, training_stats=None):
+    def __init__(self, model_func, transportation=None, training_stats=None,
+                       alpha=0.99, eps=1e-8, k=5):
         super(TransPropNet, self).__init__(
             model_func, 
             transportation=transportation,
@@ -17,9 +18,9 @@ class TransPropNet(AbstractMetaLearner):
         self.length_scale = MultiLayerPerceptron(self.feature.final_feat_dim)
 
         # Hyper-parameters used in the paper.
-        self.alpha = 0.99
-        self.eps = 1e-8
-        self.k = 5 
+        self.alpha = alpha
+        self.eps = eps
+        self.k = k
 
 
     def set_forward(self, support_images, support_labels, query_images):
@@ -39,13 +40,13 @@ class TransPropNet(AbstractMetaLearner):
 
 
         # Normalization of the laplacian
-        d = (1./(similarity+self.eps).sum(dim=0)).diag().sqrt()
+        normalize = (1./(similarity+self.eps).sum(dim=0)).diag().sqrt()
 
         laplacian = torch.matmul(
-            d,
+            normalize,
             torch.matmul(
                 similarity,
-                d
+                normalize
             )
         )
 
@@ -55,6 +56,11 @@ class TransPropNet(AbstractMetaLearner):
 
 
     def get_similarity(self, z_support, z_query):
+        """
+        Compute the similarity matrix sample to sample for label propagation. 
+        Note that support and query are merged.
+        See eq (2) of LEARNING TO PROPAGATE LABELS: TRANSDUCTIVE PROPAGATION NETWORK FOR FEW-SHOT LEARNING
+        """
         z = torch.cat(
             [
                 z_support, 
@@ -79,18 +85,20 @@ class TransPropNet(AbstractMetaLearner):
 
     def propagate(self, laplacian, support_labels):
         # compute labels as one_hot
-        b = support_labels.size(0)
         n_way = len(torch.unique(support_labels))
-
+        n_support_query = laplacian.size(0)
+        n_support = support_labels.size(0)
+        n_query = n_support_query - n_support
+        
         ## compute support labels as one hot
         one_hot_labels = set_device(
             torch.zeros(
-                support_labels.size(0), 
+                n_support, 
                 n_way
                 )
         )
 
-        one_hot_labels[torch.arange(b), support_labels] = 1.0
+        one_hot_labels[torch.arange(n_support), support_labels] = 1.0
 
         ## sample to predict has 0 everywhere
         one_hot_labels = torch.cat(
@@ -98,7 +106,7 @@ class TransPropNet(AbstractMetaLearner):
                 one_hot_labels, 
                 set_device(
                     torch.zeros(
-                        laplacian.size(0) - b, 
+                        n_query, 
                         n_way
                     )
                 )

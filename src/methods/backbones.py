@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from torch.nn.utils.weight_norm import WeightNorm
 
 from src.utils import set_device
+from src.methods.utils import softplus
 
 
 def init_layer(L):
@@ -527,14 +528,13 @@ class MultiLayerPerceptron(nn.Module):
         self.bn2 = nn.BatchNorm1d(1024)
         self.layer_3 = nn.Linear(1024, 1)
 
-        self.relu = nn.ReLU()
+        relu = nn.ReLU()
+
+        self.mlp = nn.Sequential(
+            self.layer_1, self.bn1, relu,
+            self.layer_2, self.bn2, relu, 
+            self.layer_3
+        )
 
     def forward(self, x):
-        x = self.relu(self.bn1(self.layer_1(x)))
-        x = self.relu(self.bn2(self.layer_2(x)))
-        x = self.layer_3(x)
-        return self.softplus(x)
-
-    @staticmethod
-    def softplus(x):
-        return torch.log(1 + x.exp())
+        return softplus(self.mlp(x))

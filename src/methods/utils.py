@@ -45,3 +45,7 @@ def euclidean_dist(x, y):
     y = y.unsqueeze(0).expand(n, m, d)
 
     return torch.pow(x - y, 2).sum(2)
+
+
+def softplus(x):
+    return torch.log(1 + x.exp())
