@@ -56,8 +56,7 @@ def set_and_print_random_seed():
     random.seed(np.random.randint(0, 2 ** 32 - 1))
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    prompt = f"Random seed : {random_seed}"
-    logger.info(prompt)
+    logger.info(f"Random seed : {random_seed}")
 
     return random_seed
 

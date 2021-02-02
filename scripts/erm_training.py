@@ -70,8 +70,6 @@ def main():
     torch.save(model.state_dict(), state_dict_path)
     logger.info(f"Training complete. Model state dict saved in {state_dict_path}")
 
-    return model
-
 
 if __name__ == "__main__":
     main()
