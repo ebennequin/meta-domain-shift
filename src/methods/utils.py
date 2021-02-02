@@ -1,9 +1,8 @@
 import torch
-import torch.nn as nn 
+import torch.nn as nn
 import numpy as np
 
 from src.utils import set_device
-
 
 
 def confidence_interval(standard_deviation, n_samples):
@@ -52,7 +51,16 @@ def euclidean_dist(x, y):
 def softplus(x):
     return torch.log(1 + x.exp())
 
+
 def entropy(output):
+    """
+    Compute entropy of prediction.
+    WARNING: takes logit as input, not probability.
+    Args:
+        logits (torch.Tensor): shape (, n_way)
+    Returns:
+        torch.Tensor: shape(), Mean entropy.
+    """
     p = nn.Softmax(dim=1)(output)
-    entropy = - (p * (p + 1e-6).log()).sum(dim=1)
+    entropy = -(p * (p + 1e-6).log()).sum(dim=1)
     return entropy.mean()
