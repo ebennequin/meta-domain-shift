@@ -54,5 +54,5 @@ def softplus(x):
 
 def entropy(output):
     p = nn.Softmax(dim=1)(output)
-    entropy = (p * (p + 1e-6).log()).sum(dim=1)
+    entropy = - (p * (p + 1e-6).log()).sum(dim=1)
     return entropy.mean()
