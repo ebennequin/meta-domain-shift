@@ -30,8 +30,14 @@ class TransFineTune(AbstractMetaLearner):
         Overwrites method set_forward in AbstractMetaLearner.
         """
 
+        # Compute the forward pass in the backbone    
         z_support, z_query = self.extract_features(support_images, query_images)
 
+        # Apply non-linearity 
+        z_support = nn.ReLU()(z_support)
+        z_query = nn.ReLU()(z_query)
+
+        # Compute the linear model
         self.fine_tune(z_support, z_query, support_labels)
 
         scores = self.linear_model(z_query)
@@ -45,6 +51,8 @@ class TransFineTune(AbstractMetaLearner):
         support_labels = set_device(support_labels)
 
         self.linear_model = set_device(nn.Linear(dim_features, n_way))
+
+        self.support_based_initializer(z_support, support_labels)
 
         optimizer = torch.optim.Adam(
             params=self.linear_model.parameters(),
@@ -72,6 +80,15 @@ class TransFineTune(AbstractMetaLearner):
                 loss.backward()
 
             optimizer.step()
+
+    def support_based_initializer(self, z_support, support_labels):
+        z_proto = self.get_prototypes(z_support.detach(), support_labels) 
+
+        w = z_proto / z_proto.norm(dim=1, keepdim=True)
+
+        self.linear_model.weight.data = w 
+        self.linear_model.bias.data = torch.zeros_like(self.linear_model.bias.data)
+
 
 
         
