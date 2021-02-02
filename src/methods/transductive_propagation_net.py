@@ -2,16 +2,21 @@ import torch
 from src.methods.abstract_meta_learner import AbstractMetaLearner
 from src.methods.utils import euclidean_dist
 from src.utils import set_device
-from src.methods.backbones import MultiLayerPerceptron
+from src.methods.modules.multi_layer_perceptron import MultiLayerPerceptron
 
 
 class TransPropNet(AbstractMetaLearner):
-    def __init__(self, model_func, transportation=None, training_stats=None,
-                       alpha=0.99, eps=1e-8, k=5):
+    def __init__(
+        self,
+        model_func,
+        transportation=None,
+        training_stats=None,
+        alpha=0.99,
+        eps=1e-8,
+        k=5,
+    ):
         super(TransPropNet, self).__init__(
-            model_func, 
-            transportation=transportation,
-            training_stats=training_stats
+            model_func, transportation=transportation, training_stats=training_stats
         )
 
         # Hypernetwork that fits scaling factor in similarity
@@ -22,42 +27,27 @@ class TransPropNet(AbstractMetaLearner):
         self.eps = eps
         self.k = k
 
-
     def set_forward(self, support_images, support_labels, query_images):
         """
         Overwrites method set_forward in AbstractMetaLearner.
         """
 
-        z_support, z_query = self.extract_features(
-            support_images, 
-            query_images
-        )
+        z_support, z_query = self.extract_features(support_images, query_images)
 
-        similarity = self.get_similarity(
-            z_support,
-            z_query
-        )
-
+        similarity = self.get_similarity(z_support, z_query)
 
         # Normalization of the laplacian
-        normalize = (1./(similarity+self.eps).sum(dim=0)).diag().sqrt()
+        normalize = (1.0 / (similarity + self.eps).sum(dim=0)).diag().sqrt()
 
-        laplacian = torch.matmul(
-            normalize,
-            torch.matmul(
-                similarity,
-                normalize
-            )
-        )
+        laplacian = torch.matmul(normalize, torch.matmul(similarity, normalize))
 
         scores = self.propagate(laplacian, support_labels)
 
-        return scores[support_images.size(0):]
-
+        return scores[support_images.size(0) :]
 
     def get_similarity(self, z_support, z_query):
         """
-        Compute the similarity matrix sample to sample for label propagation. 
+        Compute the similarity matrix sample to sample for label propagation.
         Note that support and query are merged.
         See eq (2) of LEARNING TO PROPAGATE LABELS: TRANSDUCTIVE PROPAGATION NETWORK FOR FEW-SHOT LEARNING
         Args:
@@ -66,18 +56,12 @@ class TransPropNet(AbstractMetaLearner):
         Returns:
             torch.Tensor: shape(n_support + n_query, n_support + n_query), similarity matrix between samples.
         """
-        z = torch.cat(
-            [
-                z_support, 
-                z_query
-            ],
-            dim=0
-        )
+        z = torch.cat([z_support, z_query], dim=0)
 
         # scaling with forward of self.length_scale
         z = z / (self.length_scale(z) + self.eps)
 
-        similarity = torch.exp(-0.5*euclidean_dist(z, z))
+        similarity = torch.exp(-0.5 * euclidean_dist(z, z))
 
         # Keep only top k values in the similarity matrix, set 0. otherwise.
         _, idx = similarity.topk(self.k, dim=1)
@@ -87,10 +71,9 @@ class TransPropNet(AbstractMetaLearner):
 
         return similarity - similarity_del
 
-
     def propagate(self, laplacian, support_labels):
         """
-        Compute label propagation. 
+        Compute label propagation.
         See eq (4) of LEARNING TO PROPAGATE LABELS: TRANSDUCTIVE PROPAGATION NETWORK FOR FEW-SHOT LEARNING
         Args:
             laplacian (torch.Tensor): shape (n_support + n_query, n_support + n_query)
@@ -99,46 +82,27 @@ class TransPropNet(AbstractMetaLearner):
             torch.Tensor: shape(n_support + n_query, n_support + n_query), similarity matrix between samples.
         """
 
-
         # compute labels as one_hot
         n_way = len(torch.unique(support_labels))
         n_support_query = laplacian.size(0)
         n_support = support_labels.size(0)
         n_query = n_support_query - n_support
-        
+
         ## compute support labels as one hot
-        one_hot_labels = set_device(
-            torch.zeros(
-                n_support, 
-                n_way
-                )
-        )
+        one_hot_labels = set_device(torch.zeros(n_support, n_way))
 
         one_hot_labels[torch.arange(n_support), support_labels] = 1.0
 
         ## sample to predict has 0 everywhere
         one_hot_labels = torch.cat(
-            [
-                one_hot_labels, 
-                set_device(
-                    torch.zeros(
-                        n_query, 
-                        n_way
-                    )
-                )
-            ]
+            [one_hot_labels, set_device(torch.zeros(n_query, n_way))]
         )
 
         # compute label propagation
-        propagation = (set_device(torch.eye(laplacian.size(0))) \
-            - self.alpha*laplacian + self.eps).inverse()
+        propagation = (
+            set_device(torch.eye(laplacian.size(0))) - self.alpha * laplacian + self.eps
+        ).inverse()
 
-        scores = torch.matmul(
-            propagation,
-            one_hot_labels
-        )
+        scores = torch.matmul(propagation, one_hot_labels)
 
         return scores
-
-
-

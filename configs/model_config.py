@@ -1,10 +1,11 @@
 from functools import partial
 
-from src.methods.batch_norm import *
+from src.methods.modules.batch_norm import *
 
 BATCHNORM = TaskNormI
 
-from src.methods.backbones import *
+from src.methods.modules import *
+from src.methods.modules.backbones import *
 from src.methods import *
 
 # Parameters of the model (method and feature extractor)
