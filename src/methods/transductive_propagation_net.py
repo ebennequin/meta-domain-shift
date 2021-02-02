@@ -60,6 +60,11 @@ class TransPropNet(AbstractMetaLearner):
         Compute the similarity matrix sample to sample for label propagation. 
         Note that support and query are merged.
         See eq (2) of LEARNING TO PROPAGATE LABELS: TRANSDUCTIVE PROPAGATION NETWORK FOR FEW-SHOT LEARNING
+        Args:
+            z_support (torch.Tensor): shape (n_support, features_dim)
+            z_query (torch.Tensor): shape (n_query, features_dim)
+        Returns:
+            torch.Tensor: shape(n_support + n_query, n_support + n_query), similarity matrix between samples.
         """
         z = torch.cat(
             [
@@ -74,7 +79,7 @@ class TransPropNet(AbstractMetaLearner):
 
         similarity = torch.exp(-0.5*euclidean_dist(z, z))
 
-        # Keep only top k values in the similarity matrix
+        # Keep only top k values in the similarity matrix, set 0. otherwise.
         _, idx = similarity.topk(self.k, dim=1)
 
         similarity_del = similarity.clone()
@@ -84,6 +89,17 @@ class TransPropNet(AbstractMetaLearner):
 
 
     def propagate(self, laplacian, support_labels):
+        """
+        Compute label propagation. 
+        See eq (4) of LEARNING TO PROPAGATE LABELS: TRANSDUCTIVE PROPAGATION NETWORK FOR FEW-SHOT LEARNING
+        Args:
+            laplacian (torch.Tensor): shape (n_support + n_query, n_support + n_query)
+            support_labels (torch.Tensor): artificial support set labels in range (0, n_way)
+        Returns:
+            torch.Tensor: shape(n_support + n_query, n_support + n_query), similarity matrix between samples.
+        """
+
+
         # compute labels as one_hot
         n_way = len(torch.unique(support_labels))
         n_support_query = laplacian.size(0)
