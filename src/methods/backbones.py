@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from torch.nn.utils.weight_norm import WeightNorm
 
 from src.utils import set_device
+from src.methods.utils import softplus
 
 from configs.model_config import BATCHNORM
 
@@ -353,7 +354,7 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-        self.final_feat_dim = 1600  # I obseverd that final feat dim is actually 256, I don't know what this is for.
+        self.final_feat_dim = 256 #1600  # I obseverd that final feat dim is actually 256, I don't know what this is for.
 
     def forward(self, x):
         out = self.trunk(x)
@@ -511,3 +512,25 @@ def ResNet50(flatten=True):
 
 def ResNet101(flatten=True):
     return ResNet(BottleneckBlock, [3, 4, 23, 3], [256, 512, 1024, 2048], flatten)
+
+
+class MultiLayerPerceptron(nn.Module):
+    def __init__(self, num_features):
+        super(MultiLayerPerceptron, self).__init__()
+
+        self.layer_1 = nn.Linear(num_features, 1024)
+        self.bn1 = nn.BatchNorm1d(1024)
+        self.layer_2 = nn.Linear(1024, 1024)
+        self.bn2 = nn.BatchNorm1d(1024)
+        self.layer_3 = nn.Linear(1024, 1)
+
+        relu = nn.ReLU()
+
+        self.mlp = nn.Sequential(
+            self.layer_1, self.bn1, relu,
+            self.layer_2, self.bn2, relu, 
+            self.layer_3
+        )
+
+    def forward(self, x):
+        return softplus(self.mlp(x))
