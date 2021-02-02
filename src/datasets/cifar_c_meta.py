@@ -48,8 +48,8 @@ class CIFAR100CMeta(CIFAR100):
         with open(SPECS_ROOT / f"{split}.json", "r") as file:
             self.split_specs = json.load(file)
 
-        split_class_idx = {
-            self.class_to_idx[class_name]
+        self.class_to_idx = {
+            class_name: self.class_to_idx[class_name]
             for class_name in self.split_specs["class_names"]
         }
         self.id_to_class = {v: k for k, v in self.class_to_idx.items()}
@@ -65,7 +65,7 @@ class CIFAR100CMeta(CIFAR100):
                 items_to_keep = [
                     item
                     for item in range(len(entry["data"]))
-                    if entry["fine_labels"][item] in split_class_idx
+                    if entry["fine_labels"][item] in self.class_to_idx.values()
                 ]
                 self.images.append([entry["data"][item] for item in items_to_keep])
                 self.labels.extend(
