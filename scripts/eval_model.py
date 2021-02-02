@@ -21,12 +21,18 @@ Evaluate a trained model.
     type=Path,
     required=True,
 )
+@click.option(
+    "--episodic",
+    help="Whether the model was trained using episodic training",
+    type=bool,
+    default=True,
+)
 @click.command()
-def main(model_path: Path):
+def main(model_path: Path, episodic: bool):
     prepare_output()
     set_and_print_random_seed()
 
-    trained_model = load_model(model_path)
+    trained_model = load_model(model_path, episodic)
 
     eval_model(trained_model)
 

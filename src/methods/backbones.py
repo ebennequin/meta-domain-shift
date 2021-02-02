@@ -6,10 +6,9 @@ import math
 import torch.nn.functional as F
 from torch.nn.utils.weight_norm import WeightNorm
 
-from src.utils import set_device
-from src.methods.utils import softplus
-
 from configs.model_config import BATCHNORM
+from src.methods.utils import softplus
+from src.utils import set_device
 
 
 def init_layer(L):
@@ -354,7 +353,8 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-        self.final_feat_dim = 256 #1600  # I obseverd that final feat dim is actually 256, I don't know what this is for.
+        self.final_feat_dim = 256
+
 
     def forward(self, x):
         out = self.trunk(x)
@@ -435,7 +435,7 @@ class ResNet(nn.Module):
         # list_of_out_dims specifies number of output channel for each stage
         super(ResNet, self).__init__()
         assert len(list_of_num_layers) == 4, "Can have only four stages"
-            
+
         conv1 = Conv2d_fw(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         bn1 = BATCHNORM(64)
         relu = nn.ReLU()
@@ -470,28 +470,16 @@ class ResNet(nn.Module):
         return out
 
 
-def Conv4():
-    return ConvNet(4)
+def Conv4(flatten=True):
+    return ConvNet(4, flatten=flatten)
 
 
-def Conv6():
-    return ConvNet(6)
+def Conv6(flatten=True):
+    return ConvNet(6, flatten=flatten)
 
 
-def Conv4NP():
-    return ConvNetNopool(4)
-
-
-def Conv6NP():
-    return ConvNetNopool(6)
-
-
-def Conv4S():
-    return ConvNetS(4)
-
-
-def Conv4SNP():
-    return ConvNetSNopool(4)
+def Conv4S(flatten=True):
+    return ConvNetS(4, flatten=flatten)
 
 
 def ResNet10(flatten=True):

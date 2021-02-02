@@ -1,12 +1,11 @@
+from collections import OrderedDict
 from distutils.dir_util import copy_tree
 from pathlib import Path
 import random
 from shutil import rmtree
 
 import numpy as np
-import pandas as pd
 import torch
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from loguru import logger
 
@@ -17,32 +16,49 @@ from configs import (
     experiment_config,
     evaluation_config,
 )
-from src.datasets.samplers import MetaSampler
-from src.datasets.utils import episodic_collate_fn
-from src.utils import set_device
+from src.utils import set_device, elucidate_ids, get_episodic_loader
 
 
-def get_loader(split: str, n_way: int, n_source: int, n_target: int, n_episodes: int):
-    dataset = dataset_config.DATASET(
-        dataset_config.DATA_ROOT, split, dataset_config.IMAGE_SIZE
-    )
-    sampler = MetaSampler(
-        dataset,
-        n_way=n_way,
-        n_source=n_source,
-        n_target=n_target,
-        n_episodes=n_episodes,
-    )
-    return (
-        DataLoader(
-            dataset,
-            batch_sampler=sampler,
-            num_workers=12,
-            pin_memory=True,
-            collate_fn=episodic_collate_fn,
-        ),
-        dataset,
-    )
+def prepare_output():
+    if experiment_config.SAVE_RESULTS:
+        if experiment_config.OVERWRITE & experiment_config.SAVE_DIR.exists():
+            rmtree(str(experiment_config.SAVE_DIR))
+            logger.info(
+                "Deleting previous content of {directory}",
+                directory=experiment_config.SAVE_DIR,
+            )
+
+        experiment_config.SAVE_DIR.mkdir(parents=True, exist_ok=False)
+        logger.add(experiment_config.SAVE_DIR / "running.log")
+        copy_tree("configs", str(experiment_config.SAVE_DIR / "experiment_parameters"))
+        logger.info(
+            "Parameters and outputs of this experiment will be saved in {directory}",
+            directory=experiment_config.SAVE_DIR,
+        )
+
+    else:
+        logger.info("This experiment will not be saved on disk.")
+
+
+def set_and_print_random_seed():
+    """
+    Set and print numpy random seed, for reproducibility of the training,
+    and set torch seed based on numpy random seed
+    Returns:
+        int: numpy random seed
+
+    """
+    random_seed = experiment_config.RANDOM_SEED
+    if not random_seed:
+        random_seed = np.random.randint(0, 2 ** 32 - 1)
+    np.random.seed(random_seed)
+    torch.manual_seed(np.random.randint(0, 2 ** 32 - 1))
+    random.seed(np.random.randint(0, 2 ** 32 - 1))
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    logger.info(f"Random seed : {random_seed}")
+
+    return random_seed
 
 
 def train_model():
@@ -50,14 +66,14 @@ def train_model():
         "Initializing data loaders for {dataset}...",
         dataset=dataset_config.DATASET.__name__,
     )
-    train_loader, _ = get_loader(
+    train_loader, _ = get_episodic_loader(
         "train",
         n_way=training_config.N_WAY,
         n_source=training_config.N_SOURCE,
         n_target=training_config.N_TARGET,
         n_episodes=training_config.N_EPISODES,
     )
-    val_loader, _ = get_loader(
+    val_loader, _ = get_episodic_loader(
         "val",
         n_way=training_config.N_WAY,
         n_source=training_config.N_SOURCE,
@@ -65,7 +81,7 @@ def train_model():
         n_episodes=training_config.N_VAL_TASKS,
     )
     if training_config.TEST_SET_VALIDATION_FREQUENCY:
-        test_loader, _ = get_loader(
+        test_loader, _ = get_episodic_loader(
             "test",
             n_way=training_config.N_WAY,
             n_source=training_config.N_SOURCE,
@@ -73,14 +89,7 @@ def train_model():
             n_episodes=training_config.N_VAL_TASKS,
         )
 
-    try:
-        logger.info(
-            "Initializing {model} with {backbone}...",
-            model=model_config.MODEL.__name__,
-            backbone=model_config.BACKBONE.__name__,
-        )
-    except AttributeError:
-        logger.info("Initializing model...")
+    logger.info("Initializing model...")
 
     model = set_device(model_config.MODEL(model_config.BACKBONE))
     optimizer = training_config.OPTIMIZER(model.parameters())
@@ -132,32 +141,17 @@ def train_model():
     return model
 
 
-def load_model(state_path: Path):
+def load_model(state_path: Path, episodic: bool):
     model = set_device(model_config.MODEL(model_config.BACKBONE))
-    model.load_state_dict(torch.load(state_path))
+    state_dict = torch.load(state_path)
+    if not episodic:
+        state_dict = OrderedDict(
+            [(f"feature.{k}", v) for k, v in state_dict.items() if ".fc." not in k]
+        )
+    model.load_state_dict(state_dict)
     logger.info(f"Loaded model from {state_path}")
 
     return model
-
-
-def elucidate_ids(df, dataset):
-    """
-    Retrieves explicit class and domain names in dataset from their integer index,
-        and returns modified DataFrame
-    Args:
-        df (pd.DataFrame): input DataFrame. Must be the same format as the output of AbstractMetaLearner.get_task_perf()
-        dataset (Dataset): the dataset
-    Returns:
-        pd.DataFrame: output DataFrame with explicit class and domain names
-    """
-    return df.replace(
-        {
-            "predicted_label": dataset.id_to_class,
-            "true_label": dataset.id_to_class,
-            "source_domain": dataset.id_to_domain,
-            "target_domain": dataset.id_to_domain,
-        }
-    )
 
 
 def eval_model(model):
@@ -165,7 +159,7 @@ def eval_model(model):
         "Initializing test data from {dataset}...",
         dataset=dataset_config.DATASET.__name__,
     )
-    test_loader, test_dataset = get_loader(
+    test_loader, test_dataset = get_episodic_loader(
         "test",
         n_way=evaluation_config.N_WAY,
         n_source=evaluation_config.N_SOURCE,
@@ -183,46 +177,3 @@ def eval_model(model):
     stats_df.to_csv(experiment_config.SAVE_DIR / "evaluation_stats.csv", index=False)
 
     return acc
-
-
-def set_and_print_random_seed():
-    """
-    Set and print numpy random seed, for reproducibility of the training,
-    and set torch seed based on numpy random seed
-    Returns:
-        int: numpy random seed
-
-    """
-    random_seed = experiment_config.RANDOM_SEED
-    if not random_seed:
-        random_seed = np.random.randint(0, 2 ** 32 - 1)
-    np.random.seed(random_seed)
-    torch.manual_seed(np.random.randint(0, 2 ** 32 - 1))
-    random.seed(np.random.randint(0, 2 ** 32 - 1))
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    prompt = f"Random seed : {random_seed}"
-    logger.info(prompt)
-
-    return random_seed
-
-
-def prepare_output():
-    if experiment_config.SAVE_RESULTS:
-        if experiment_config.OVERWRITE & experiment_config.SAVE_DIR.exists():
-            rmtree(str(experiment_config.SAVE_DIR))
-            logger.info(
-                "Deleting previous content of {directory}",
-                directory=experiment_config.SAVE_DIR,
-            )
-
-        experiment_config.SAVE_DIR.mkdir(parents=True, exist_ok=False)
-        logger.add(experiment_config.SAVE_DIR / "running.log")
-        copy_tree("configs", str(experiment_config.SAVE_DIR / "experiment_parameters"))
-        logger.info(
-            "Parameters and outputs of this experiment will be saved in {directory}",
-            directory=experiment_config.SAVE_DIR,
-        )
-
-    else:
-        logger.info("This experiment will not be saved on disk.")
