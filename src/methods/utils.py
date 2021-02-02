@@ -52,7 +52,7 @@ def softplus(x):
     return torch.log(1 + x.exp())
 
 
-def entropy(output):
+def entropy(logits):
     """
     Compute entropy of prediction.
     WARNING: takes logit as input, not probability.
@@ -61,6 +61,6 @@ def entropy(output):
     Returns:
         torch.Tensor: shape(), Mean entropy.
     """
-    p = nn.Softmax(dim=1)(output)
+    p = nn.Softmax(dim=1)(logits)
     entropy = -(p * (p + 1e-6).log()).sum(dim=1)
     return entropy.mean()

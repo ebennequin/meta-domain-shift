@@ -63,6 +63,8 @@ class TransFineTune(AbstractMetaLearner):
         # Refresh parameters
         self.feature.load_state_dict(feature_parameters)
 
+        feature_parameters_ = copy.deepcopy(self.feature).cpu().state_dict()
+
         return scores
 
     def fine_tune(self, support_images, support_labels, query_images):
@@ -71,8 +73,10 @@ class TransFineTune(AbstractMetaLearner):
             + list(self.feature.parameters()),
             lr=self.lr,
             weight_decay=0.0,
-        )
+        ) 
 
+        self.feature.train()
+        self.linear_model.train()
         for _ in range(self.epochs):
             optimizer.zero_grad()
 
@@ -81,7 +85,7 @@ class TransFineTune(AbstractMetaLearner):
             support_output = self.linear_model(z_support)
             query_output = self.linear_model(z_query)
 
-            classif_loss = nn.CrossEntropyLoss()(support_output, support_labels)
+            classif_loss = self.loss_fn(support_output, support_labels)
             entropy_loss = entropy(query_output)
 
             loss = classif_loss + entropy_loss
@@ -90,10 +94,13 @@ class TransFineTune(AbstractMetaLearner):
 
             optimizer.step()
 
+        self.feature.eval()
+        self.linear_model.eval()
+
     def support_based_initializer(self, support_images, support_labels):
         """
         Support based intialization
-        See eq (6)
+        See eq (6) A BASELINE FOR FEW-SHOT IMAGE CLASSIFICATION
         """
         z_support = self.feature(support_images).detach()
 
@@ -101,8 +108,8 @@ class TransFineTune(AbstractMetaLearner):
 
         w = z_proto / z_proto.norm(dim=1, keepdim=True)
 
-        self.linear_model.weight.data = w
-        self.linear_model.bias.data = torch.zeros_like(self.linear_model.bias.data)
+        self.linear_model.weight.data = w.clone()
+        self.linear_model.bias.data = torch.zeros_like(self.linear_model.bias.data).clone()
 
     def train_loop(self, epoch, train_loader, optimizer):
         raise NotImplementedError(
