@@ -122,6 +122,8 @@ class TransFineTune(AbstractMetaLearner):
         self.linear_model.weight.data = w 
         self.linear_model.bias.data = torch.zeros_like(self.linear_model.bias.data)
 
+    def train_loop(self, epoch, train_loader, optimizer):
+        raise NotImplementedError('Transductive Fine-Tuning does not support episodic training.')
 
 
         
