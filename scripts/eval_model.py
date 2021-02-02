@@ -27,12 +27,20 @@ Evaluate a trained model.
     type=bool,
     default=True,
 )
+
+@click.option(
+    "--use_fc",
+    help="Whether the model load the fc layer in the backbone",
+    type=bool,
+    default=False,
+)
+
 @click.command()
-def main(model_path: Path, episodic: bool):
+def main(model_path: Path, episodic: bool, use_fc: bool):
     prepare_output()
     set_and_print_random_seed()
 
-    trained_model = load_model(model_path, episodic)
+    trained_model = load_model(model_path, episodic, use_fc)
 
     eval_model(trained_model)
 
