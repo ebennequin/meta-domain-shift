@@ -141,13 +141,16 @@ def train_model():
     return model
 
 
-def load_model(state_path: Path, episodic: bool):
+def load_model(state_path: Path, episodic: bool, use_fc: bool):
     model = set_device(model_config.MODEL(model_config.BACKBONE))
     state_dict = torch.load(state_path)
     if not episodic:
         state_dict = OrderedDict(
+            [(f"feature.{k}", v) for k, v in state_dict.items()]
+        ) if use_fc else OrderedDict(
             [(f"feature.{k}", v) for k, v in state_dict.items() if ".fc." not in k]
         )
+        
     model.load_state_dict(state_dict)
     logger.info(f"Loaded model from {state_path}")
 
