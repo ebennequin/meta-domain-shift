@@ -2,7 +2,7 @@ from functools import partial
 
 from src.methods.modules.batch_norm import *
 
-BATCHNORM = ConventionalBatchNorm
+BATCHNORM = MetaNorm #ConventionalBatchNorm
 
 from src.methods.modules import *
 from src.methods.modules.backbones import *

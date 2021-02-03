@@ -4,14 +4,14 @@ from src.methods.utils import softplus
 
 
 class MultiLayerPerceptron(nn.Module):
-    def __init__(self, num_features):
+    def __init__(self, num_features, out_dim=1, hidden_dim=1024):
         super(MultiLayerPerceptron, self).__init__()
 
-        self.layer_1 = nn.Linear(num_features, 1024)
-        self.bn1 = nn.BatchNorm1d(1024)
-        self.layer_2 = nn.Linear(1024, 1024)
-        self.bn2 = nn.BatchNorm1d(1024)
-        self.layer_3 = nn.Linear(1024, 1)
+        self.layer_1 = nn.Linear(num_features, hidden_dim)
+        self.bn1 = nn.BatchNorm1d(hidden_dim)
+        self.layer_2 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn2 = nn.BatchNorm1d(hidden_dim)
+        self.layer_3 = nn.Linear(hidden_dim, out_dim)
 
         relu = nn.ReLU()
 
@@ -20,4 +20,4 @@ class MultiLayerPerceptron(nn.Module):
         )
 
     def forward(self, x):
-        return softplus(self.mlp(x))
+        return self.mlp(x)

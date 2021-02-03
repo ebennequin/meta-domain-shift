@@ -62,8 +62,10 @@ class AbstractMetaLearner(nn.Module):
                 - shape(,), training loss
         """
         optimizer.zero_grad()
+
         scores = self.set_forward(support_images, support_labels, query_images)
-        loss = self.loss_fn(scores, query_labels)
+        loss = self.loss_fn(scores, query_labels) + self.normalization_loss()
+
         loss.backward()
         optimizer.step()
 
@@ -84,7 +86,13 @@ class AbstractMetaLearner(nn.Module):
         support_images = set_device(support_images)
         query_images = set_device(query_images)
 
+
+        # Support forward
+        self.prepare_forward(mode='support')
         z_support = self.feature.forward(support_images)
+
+        # Query forward
+        self.prepare_forward(mode='query')
         z_query = self.feature.forward(query_images)
 
         return z_support, z_query
@@ -261,3 +269,25 @@ class AbstractMetaLearner(nn.Module):
         )
 
         return np.asarray(loss_all).mean(), acc_mean, evaluations_stats_df
+
+    def normalization_loss(self):
+        """
+        Computes a specific regularization loss.
+        If not implemented: torch.tensor(0.)
+        Args:
+            support_images (torch.Tensor): shape (number_of_support_set_images, **image_shape)
+            support_labels (torch.Tensor): artificial support set labels in range (0, n_way)
+            query_images (torch.Tensor): shape (number_of_query_set_images, **image_shape)
+            query_labels (torch.Tensor): artificial query set labels in range (0, n_way)
+        Returns:
+            tensor (torch.Tensor): regularization loss ()
+        """
+
+        loss = 0.
+        for m in [m for name, m in self.feature.named_modules() if ('BN' in name) & ('hyper_net' not in name)]:
+            loss = loss + m.loss
+        return 0.001*loss 
+
+    def prepare_forward(self, mode):
+        for m in [m for name, m in self.feature.named_modules() if ('BN' in name) & ('hyper_net' not in name)]:
+            m.prepare_forward(mode)

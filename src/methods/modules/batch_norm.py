@@ -6,26 +6,123 @@ import torch.nn.functional as F
 
 from src.utils import set_device
 
-ConventionalBatchNorm = nn.BatchNorm2d
+from src.methods.modules.multi_layer_perceptron import MultiLayerPerceptron
+
+#ConventionalBatchNorm = nn.BatchNorm2d
 
 
-class TransductiveBatchNorm(nn.BatchNorm2d):
-    def forward(self, x):
-        running_mean = set_device(torch.zeros(x.data.size()[1]))
-        running_var = set_device(torch.ones(x.data.size()[1]))
-        out = F.batch_norm(
-            x,
-            running_mean,
-            running_var,
-            self.weight,
-            self.bias,
-            training=True,
-            momentum=1,
+class _MetaBatchNorm(nn.BatchNorm2d):
+    def __init__(self,
+        num_features: int,
+        eps: float = 1e-5,
+        momentum: float = 0.1,
+        affine: bool = True,
+        track_running_stats: bool = True):
+
+        super(_MetaBatchNorm, self).__init__(
+            num_features, 
+            eps, 
+            momentum,
+            affine,
+            track_running_stats
         )
+
+        self.loss = 0.
+
+    def prepare_forward(self, mode):
+        pass
+
+
+
+class ConventionalBatchNorm(_MetaBatchNorm):
+    def __init__(self,
+        num_features: int,
+        eps: float = 1e-5,
+        momentum: float = 0.1,
+        affine: bool = True,
+        track_running_stats: bool = True):
+
+        super(ConventionalBatchNorm, self).__init__(
+            num_features, 
+            eps, 
+            momentum,
+            affine,
+            track_running_stats
+        )
+
+
+class TransductiveBatchNorm(_MetaBatchNorm):
+    def prepare_forward(self, mode):
+        self.running_mean = set_device(torch.zeros_like(self.running_mean))
+        self.running_var = set_device(torch.ones_like(self.running_var))
+        self.training = True 
+
+
+class MetaNorm(_MetaBatchNorm):
+    def __init__(self,
+        num_features: int,
+        eps: float = 1e-5,
+        momentum: float = 0.1,
+        affine: bool = True,
+        track_running_stats: bool = False, 
+        hidden_dim: int = 128):
+
+        super(MetaNorm, self).__init__(
+            num_features, 
+            eps, 
+            momentum,
+            affine,
+            track_running_stats
+        )
+
+        self.mean_hyper_net = MultiLayerPerceptron(num_features, num_features, hidden_dim)
+        self.var_hyper_net = MultiLayerPerceptron(num_features, num_features, hidden_dim)
+
+        self.infer_mean = None 
+        self.infer_var = None 
+
+        self.reset_stats = None
+        self.reset_loss = None 
+
+    def prepare_forward(self, mode):
+        if mode == 'support':
+            self.reset_stats = True 
+            self.reset_loss = False
+        elif mode == 'query': 
+            self.reset_stats = False
+            self.reset_loss = True
+
+    def forward(self, x):
+        if self.reset_stats:
+            self.set_running_mean_var(x)
+        if self.reset_loss & self.training: 
+            self.compute_loss(x) 
+        
+        x = (x - self.infer_mean) / (self.infer_var + self.eps).sqrt()
+        out = self.weight.reshape(1,-1,1,1) * x + self.bias.reshape(1,-1,1,1)
         return out
 
+    def get_mean_var(self, x):
+        x = x.permute([0, 2, 3, 1]).flatten(start_dim=0, end_dim=2)
+        mean = self.mean_hyper_net(x).mean(dim=0)
+        var = self.var_hyper_net(
+            (x - mean)**2
+        ).mean(dim=0)
+        return mean.reshape(1,-1,1,1), var.reshape(1,-1,1,1)
 
-class NormalizationLayer(nn.BatchNorm2d):
+    def set_running_mean_var(self, x):
+        self.infer_mean, self.infer_var = self.get_mean_var(x)
+
+    def compute_loss(self, x):
+        mean_query, var_query = self.get_mean_var(x)
+
+        self.loss = 0.5*(
+            (var_query /  self.infer_var).log() + \
+            ( self.infer_var + (self.infer_mean - mean_query)) / var_query + - 1.
+            ).norm()
+
+
+class NormalizationLayer(_MetaBatchNorm):
     """
     Base class for all normalization layers.
     Derives from nn.BatchNorm2d to maintain compatibility with the pre-trained resnet-18.
