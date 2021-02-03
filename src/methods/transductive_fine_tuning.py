@@ -7,6 +7,7 @@ import copy
 
 
 from configs.dataset_config import CLASSES
+from configs.evaluation_config import N_WAY
 
 
 class TransFineTune(AbstractMetaLearner):
@@ -16,7 +17,7 @@ class TransFineTune(AbstractMetaLearner):
         transportation=None,
         training_stats=None,
         lr=5.0 * 1e-5,
-        epochs=100,
+        epochs=25,
     ):
         super(TransFineTune, self).__init__(
             model_func, transportation=transportation, training_stats=training_stats
@@ -47,11 +48,9 @@ class TransFineTune(AbstractMetaLearner):
         # Save parameters
         feature_parameters = copy.deepcopy(self.feature).cpu().state_dict()
 
-        # Init linear model
-        self.linear_model = set_device(
-            nn.Linear(CLASSES["train"], len(torch.unique(support_labels)))
-        )
 
+        # Init linear model
+        self.linear_model = set_device(nn.Linear(CLASSES["train"], N_WAY))
         self.support_based_initializer(support_images, support_labels)
 
         # Compute the linear model
@@ -63,8 +62,6 @@ class TransFineTune(AbstractMetaLearner):
         # Refresh parameters
         self.feature.load_state_dict(feature_parameters)
 
-        feature_parameters_ = copy.deepcopy(self.feature).cpu().state_dict()
-
         return scores
 
     def fine_tune(self, support_images, support_labels, query_images):
@@ -75,8 +72,7 @@ class TransFineTune(AbstractMetaLearner):
             weight_decay=0.0,
         ) 
 
-        self.feature.train()
-        self.linear_model.train()
+        self.train()
         for _ in range(self.epochs):
             optimizer.zero_grad()
 
@@ -93,9 +89,7 @@ class TransFineTune(AbstractMetaLearner):
             loss.backward()
 
             optimizer.step()
-
-        self.feature.eval()
-        self.linear_model.eval()
+        self.eval()
 
     def support_based_initializer(self, support_images, support_labels):
         """
