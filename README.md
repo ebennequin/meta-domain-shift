@@ -22,6 +22,9 @@ source venv/bin/activate
 
 Then install dependencies: `pip install -r requirements.txt`.
 
+## Data
+To install the datasets to your machine, please follow [this walkthrough](DATASETS.md).
+
 ## Run an experiment
 
 Configure your experiment by changing the values in `configs/*.py`, then launch your experiment.

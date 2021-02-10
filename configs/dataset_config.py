@@ -1,3 +1,4 @@
+from functools import partial
 from pathlib import Path
 
 from src.datasets import *
@@ -12,3 +13,5 @@ SPECS_ROOT = Path("configs/dataset_specs/cifar_100_c")
 # IMAGE_SIZE = 224
 # DATA_ROOT = Path("/data/etienneb/ILSVRC2015/Data/CLS-LOC/train")
 # SPECS_ROOT = Path("configs/dataset_specs/tiered_imagenet_c")
+
+# DATASET = partial(TieredImageNetC, load_corrupted_dataset=True)

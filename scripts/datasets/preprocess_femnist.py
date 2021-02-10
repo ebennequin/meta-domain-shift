@@ -6,6 +6,9 @@ import pandas as pd
 from PIL import Image
 from loguru import logger
 
+"""
+Write the FEMNIST dataset in the form of three .npy files (for train, val and test).
+"""
 
 @click.option(
     "--specs-dir",
