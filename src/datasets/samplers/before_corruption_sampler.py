@@ -4,7 +4,13 @@ import torch
 from torch.utils.data import Sampler
 
 
-class EpisodeSampler(Sampler):
+class BeforeCorruptionSampler(Sampler):
+    """
+    Sample images from a dataset which uses image perturbations (like CIFAR100-C or tieredImageNet-C), in the
+    case where perturbations are applied online. For the case where images on disk are already corrupted, see
+    AfterCorruptionSampler.
+    """
+
     def __init__(self, dataset, n_way, n_source, n_target, n_episodes):
         self.n_domains = len(dataset.id_to_domain)
         self.n_total_images = len(dataset.images)
@@ -15,7 +21,6 @@ class EpisodeSampler(Sampler):
 
         self.items_per_label = {}
 
-        # TODO: ne va pas marcher pour TieredImageNet-C avec load_corrupted_images = True
         for item, label in enumerate(dataset.labels):
             if label in self.items_per_label.keys():
                 self.items_per_label[label].append(item)

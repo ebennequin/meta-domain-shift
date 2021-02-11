@@ -5,7 +5,7 @@ import torchvision
 from torch.utils.data import DataLoader
 
 from configs import dataset_config
-from src.datasets.samplers import EpisodeSampler
+from src.datasets.samplers import BeforeCorruptionSampler
 from src.datasets.utils import episodic_collate_fn
 
 
@@ -65,8 +65,7 @@ def get_episodic_loader(
     dataset = dataset_config.DATASET(
         dataset_config.DATA_ROOT, split, dataset_config.IMAGE_SIZE
     )
-    sampler = EpisodeSampler(
-        dataset,
+    sampler = dataset.get_sampler()(
         n_way=n_way,
         n_source=n_source,
         n_target=n_target,
