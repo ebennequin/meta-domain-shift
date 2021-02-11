@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import numpy as np
 
 from src.utils import set_device
@@ -49,3 +50,17 @@ def euclidean_dist(x, y):
 
 def softplus(x):
     return torch.log(1 + x.exp())
+
+
+def entropy(logits):
+    """
+    Compute entropy of prediction.
+    WARNING: takes logit as input, not probability.
+    Args:
+        logits (torch.Tensor): shape (, n_way)
+    Returns:
+        torch.Tensor: shape(), Mean entropy.
+    """
+    p = nn.Softmax(dim=1)(logits)
+    entropy = -(p * (p + 1e-6).log()).sum(dim=1)
+    return entropy.mean()
