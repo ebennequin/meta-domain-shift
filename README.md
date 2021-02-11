@@ -13,14 +13,16 @@ Git clone the repo:
 git clone git@github.com:ebennequin/meta-domain-shift.git
 ```
 
-Then `cd meta-domain-shift` and install virtualenv:
+Then `cd meta-domain-shift` and create a virtual environment (if you don't already have it,
+use `pip install virtualenv`):
 
 ```
 virtualenv venv --python=python3.7
 source venv/bin/activate
 ```
 
-Then install dependencies: `pip install -r requirements.txt`.
+Then install dependencies: `pip install -r requirements.txt`
+Some perturbations used in CIFAR-100-C-FewShot and *tiered*ImageNet-C use Wand: `sudo apt-get install libmagickwand-dev`
 
 ## Data
 To install the datasets to your machine, please follow [this walkthrough](DATASETS.md).
@@ -30,8 +32,13 @@ To install the datasets to your machine, please follow [this walkthrough](DATASE
 Configure your experiment by changing the values in `configs/*.py`, then launch your experiment.
 ```python scripts/run_experiment.py```
 
+On some machines, the `src` module will not be found by Python. If this happens to you, run
+`export PYTHONPATH=path/to/meta-domain-shift` to tell Python where you're at.
+
 All outputs of the experiment (explicit configuration, logs, trained model state and TensorBoard logs) 
-can then be found in the directory specified in `configs/experiment_config.py`.
+can then be found in the directory specified in `configs/experiment_config.py`. By default, an error will be risen if 
+the specified directory already exists (in order to not harm the results of previous experiments). You may
+change this behaviour in `configs/experiment_config.py` by setting `OVERWRITE = True`.
 
 ### Track trainings with Tensorboard
 
