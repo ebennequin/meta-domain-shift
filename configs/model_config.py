@@ -10,8 +10,8 @@ from src.methods import *
 
 # Parameters of the model (method and feature extractor)
 
-# BACKBONE = ResNet34
-BACKBONE = Conv4
+BACKBONE = ResNet50
+# BACKBONE = Conv4
 
 MODEL = partial(
     ProtoNet,

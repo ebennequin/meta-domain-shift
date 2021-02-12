@@ -14,7 +14,6 @@ from configs import (
     training_config,
     model_config,
     experiment_config,
-    evaluation_config,
 )
 from src.utils import set_device, elucidate_ids, get_episodic_loader
 
