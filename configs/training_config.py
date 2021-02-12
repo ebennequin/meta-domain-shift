@@ -15,3 +15,9 @@ OPTIMIZER = partial(
 )
 # Set the following to None to avoid using test set during training
 TEST_SET_VALIDATION_FREQUENCY = 21
+
+# Parameters for model evaluation
+N_WAY_EVAL = N_WAY
+N_SOURCE_EVAL = N_SOURCE
+N_TARGET_EVAL = N_TARGET
+N_TASKS_EVAL = 2

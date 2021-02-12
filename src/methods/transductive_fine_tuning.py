@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 from src.methods.abstract_meta_learner import AbstractMetaLearner
-from src.methods.utils import euclidean_dist, entropy
+from src.methods.utils import entropy
 from src.utils import set_device
 import copy
 
 
 from configs.dataset_config import CLASSES
-from configs.evaluation_config import N_WAY
+from configs.training_config import N_WAY_EVAL
 
 
 class TransFineTune(AbstractMetaLearner):
@@ -49,7 +49,7 @@ class TransFineTune(AbstractMetaLearner):
         feature_parameters = copy.deepcopy(self.feature).cpu().state_dict()
 
         # Init linear model
-        self.linear_model = set_device(nn.Linear(CLASSES["train"], N_WAY))
+        self.linear_model = set_device(nn.Linear(CLASSES["train"], N_WAY_EVAL))
         self.support_based_initializer(support_images, support_labels)
 
         # Compute the linear model

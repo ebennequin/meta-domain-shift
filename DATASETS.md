@@ -22,8 +22,8 @@ are applied to the images online during runtime.
 ## *tiered*ImageNet-C
 
 This dataset is built on the train split of ILSVRC2015 (available for download [here](http://www.image-net.org/)).
-To run the experiments, you will only need to specify in `./configs/dataset_config.py` as DATA_ROOT the directory
-where the ImageNet classes are located.
+To run the experiments, you will need to specify in `./configs/all_datasets_configs/regular_tiered_imagenet_c_config.py` as DATA_ROOT the directory
+where the ImageNet classes are located, and import the content of `regular_tiered_imagenet_c_config` in `configs/dataset_configs.py`.
 
 As CIFAR100-C, this dataset is built using [Hendrycks' perturbations](https://github.com/hendrycks/robustness).
 By default, these perturbations are applied online to the images when loaded from the disk during runtime.
@@ -33,7 +33,7 @@ If this doesn't work on your machine, run
 `python -m scripts/datasets/write_tieredimagenet_c.py --input-dir=path/to/ILSVRC2015/Data/CLS-LOC/train --output-dir=where/you/want` 
 to write the corrupted dataset explicitly on your disk. This process may take a long time to run and will need 2.1TB of disk
 space, but it will bless you with smooth and quick experiments on *tiered*ImageNet-C. To use the corrupted dataset in your
-experiments, in `./configs/dataset_config.py`, define `DATASET = partial(TieredImageNetC, load_corrupted_dataset=True)`.
+experiments, in `./configs/dataset_config.py`, import the content of `configs.all_datasets_configs.corrupted_tiered_imagenet_c_configs`.
 
 
 
