@@ -10,6 +10,7 @@ from loguru import logger
 Write the FEMNIST dataset in the form of three .npy files (for train, val and test).
 """
 
+
 @click.option(
     "--specs-dir",
     help="Directory where the CSV specification files for train, val and test are located",
@@ -38,12 +39,10 @@ Write the FEMNIST dataset in the form of three .npy files (for train, val and te
 def main(specs_dir, save_dir, mode, size):
     for specs_file_path in specs_dir.glob("*.csv"):
         images_path = pd.read_csv(specs_file_path, index_col=0).img_path
-        images = []
-        for img_path in images_path:
-            images.append(
-                np.asarray(Image.open(img_path).convert(mode).resize((size, size)))
-                / 255
-            )
+        images = [
+            np.asarray(Image.open(img_path).convert(mode).resize((size, size))) / 255
+            for img_path in images_path
+        ]
         output_path = save_dir / f"{specs_file_path.stem}.npy"
         np.save(output_path, np.stack(images))
         logger.info(

@@ -27,14 +27,12 @@ Evaluate a trained model.
     type=bool,
     default=True,
 )
-
 @click.option(
     "--use_fc",
     help="Whether the model load the fc layer in the backbone",
     type=bool,
     default=False,
 )
-
 @click.command()
 def main(model_path: Path, episodic: bool, use_fc: bool):
     prepare_output()
