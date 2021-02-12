@@ -7,8 +7,8 @@ from src.datasets import *
 # DATASET = CIFAR100CMeta
 # IMAGE_SIZE = 32
 # CLASSES = {
-#     'train': 100, 
-#     'val': 10, 
+#     'train': 100,
+#     'val': 10,
 #     'test': 15
 # }
 # DATA_ROOT = Path("./data")

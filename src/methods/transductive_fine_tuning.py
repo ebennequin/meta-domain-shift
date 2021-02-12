@@ -48,7 +48,6 @@ class TransFineTune(AbstractMetaLearner):
         # Save parameters
         feature_parameters = copy.deepcopy(self.feature).cpu().state_dict()
 
-
         # Init linear model
         self.linear_model = set_device(nn.Linear(CLASSES["train"], N_WAY))
         self.support_based_initializer(support_images, support_labels)
@@ -70,7 +69,7 @@ class TransFineTune(AbstractMetaLearner):
             + list(self.feature.parameters()),
             lr=self.lr,
             weight_decay=0.0,
-        ) 
+        )
 
         self.train()
         for _ in range(self.epochs):
@@ -103,7 +102,9 @@ class TransFineTune(AbstractMetaLearner):
         w = z_proto / z_proto.norm(dim=1, keepdim=True)
 
         self.linear_model.weight.data = w.clone()
-        self.linear_model.bias.data = torch.zeros_like(self.linear_model.bias.data).clone()
+        self.linear_model.bias.data = torch.zeros_like(
+            self.linear_model.bias.data
+        ).clone()
 
     def train_loop(self, epoch, train_loader, optimizer):
         raise NotImplementedError(
