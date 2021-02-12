@@ -9,6 +9,7 @@ import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
 
 from configs.dataset_specs.cifar_100_c.perturbation_params import PERTURBATION_PARAMS
+from src.datasets.samplers import BeforeCorruptionSampler
 from src.datasets.transform import TransformLoader
 from src.datasets.utils import get_perturbations
 
@@ -104,3 +105,6 @@ class CIFAR100CMeta(CIFAR100):
             label = self.target_transform(label)
 
         return img, label, perturbation_index
+
+    def get_sampler(self):
+        return partial(BeforeCorruptionSampler, self)

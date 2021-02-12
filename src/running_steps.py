@@ -62,10 +62,7 @@ def set_and_print_random_seed():
 
 
 def train_model():
-    logger.info(
-        "Initializing data loaders for {dataset}...",
-        dataset=dataset_config.DATASET.__name__,
-    )
+    logger.info("Initializing data loaders...")
     train_loader, _ = get_episodic_loader(
         "train",
         n_way=training_config.N_WAY,
@@ -160,10 +157,7 @@ def load_model(state_path: Path, episodic: bool, use_fc: bool):
 
 
 def eval_model(model):
-    logger.info(
-        "Initializing test data from {dataset}...",
-        dataset=dataset_config.DATASET.__name__,
-    )
+    logger.info("Initializing test data...")
     test_loader, test_dataset = get_episodic_loader(
         "test",
         n_way=evaluation_config.N_WAY,

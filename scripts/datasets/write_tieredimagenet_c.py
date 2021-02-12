@@ -22,9 +22,9 @@ from src.datasets import TieredImageNetC
 )
 @click.command()
 def main(input_dir, output_dir):
-    train_set = TieredImageNetC(input_dir, "train", 224)
-    val_set = TieredImageNetC(input_dir, "val", 224)
-    test_set = TieredImageNetC(input_dir, "test", 224)
+    train_set = TieredImageNetC(input_dir, "train", 224, load_corrupted_dataset=False)
+    val_set = TieredImageNetC(input_dir, "val", 224, load_corrupted_dataset=False)
+    test_set = TieredImageNetC(input_dir, "test", 224, load_corrupted_dataset=False)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     trans = transforms.ToPILImage()

@@ -1,4 +1,5 @@
 import json
+from functools import partial
 from pathlib import Path
 
 import os
@@ -8,6 +9,7 @@ from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
+from loguru import logger
 from torchvision.datasets import VisionDataset
 from torchvision import transforms
 from tqdm import tqdm
@@ -15,6 +17,7 @@ from tqdm import tqdm
 from configs.dataset_specs.tiered_imagenet_c.perturbation_params import (
     PERTURBATION_PARAMS,
 )
+from src.datasets.samplers import AfterCorruptionSampler, BeforeCorruptionSampler
 from src.datasets.transform import TransformLoader
 from src.datasets.utils import get_perturbations
 
@@ -49,18 +52,26 @@ class TieredImageNetC(VisionDataset):
         self.domain_to_id = {v: k for k, v in self.id_to_domain.items()}
 
         self.load_corrupted_dataset = load_corrupted_dataset
+        logger.info(f"Retrieving {split} images ...")
         if self.load_corrupted_dataset:
             self.images_df = (
-                pd.DataFrame(
+                pd.concat(
                     [
-                        [
-                            self.class_to_id[img_path.parts[-3]],
-                            self.domain_to_id[img_path.parts[-2]],
-                            img_path.parts[-1],
-                        ]
-                        for img_path in tqdm(self.root.glob("*/*/*.png"))
+                        pd.DataFrame(
+                            [
+                                [
+                                    img_path.parts[-1],
+                                    self.domain_to_id[img_path.parts[-2]],
+                                ]
+                                for img_path in (self.root / class_name).glob("*/*.png")
+                            ],
+                            columns=["img_name", "domain_id"],
+                        ).assign(class_id=class_id)
+                        for class_name, class_id in tqdm(
+                            self.class_to_id.items(), unit="classes"
+                        )
                     ],
-                    columns=["class_id", "domain_id", "img_name"],
+                    ignore_index=True,
                 )
                 .sort_values(by=["class_id", "img_name", "domain_id"])
                 .reset_index(drop=True)
@@ -69,7 +80,7 @@ class TieredImageNetC(VisionDataset):
             self.images, self.labels = self.get_images_and_labels()
             self.images_df = pd.DataFrame(
                 {
-                    "label": self.labels,
+                    "class_id": self.labels,
                     "img_name": [os.path.basename(x) for x in self.images],
                     "key": 1,
                 }
@@ -77,14 +88,16 @@ class TieredImageNetC(VisionDataset):
                 pd.DataFrame({"domain_id": list(self.id_to_domain.keys()), "key": 1}),
                 on="key",
             )[
-                ["label", "domain_id", "img_name"]
+                ["class_id", "domain_id", "img_name"]
             ]
 
     def __len__(self):
         return len(self.images_df)
 
     def __getitem__(self, item):
-        label, domain_id, img_name = self.images_df.loc[item]
+        img_name = self.images_df.img_name.iloc[int(item)]
+        label = self.images_df.class_id.iloc[int(item)]
+        domain_id = self.images_df.domain_id.iloc[int(item)]
 
         if self.load_corrupted_dataset:
             img = self.transform(
@@ -132,3 +145,9 @@ class TieredImageNetC(VisionDataset):
             image_labels += len(class_images_paths) * [class_id]
 
         return image_names, image_labels
+
+    def get_sampler(self):
+        if self.load_corrupted_dataset:
+            return partial(AfterCorruptionSampler, self)
+        else:
+            return partial(BeforeCorruptionSampler, self)
