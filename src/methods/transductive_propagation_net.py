@@ -33,6 +33,9 @@ class TransPropNet(AbstractMetaLearner):
         """
 
         z_support, z_query = self.extract_features(support_images, query_images)
+        # If a transportation method in the feature space has been defined, use it
+        if self.transportation_module:
+            z_support, z_query = self.transportation_module(z_support, z_query)
 
         similarity = self.get_similarity(z_support, z_query)
 
