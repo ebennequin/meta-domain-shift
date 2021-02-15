@@ -7,7 +7,7 @@ import copy
 
 
 from configs.dataset_config import CLASSES
-from configs.training_config import N_WAY_EVAL
+from configs.evaluation_config import N_WAY_EVAL
 
 
 class TransFineTune(AbstractMetaLearner):

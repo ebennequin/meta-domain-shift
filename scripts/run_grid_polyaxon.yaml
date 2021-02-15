@@ -18,8 +18,6 @@ hptuning:
       values: [1, 5]
     n_target:
       values: [8, 16]
-    random_seed:
-      values: [1, 2]
 
 build:
   image: pytorch/pytorch:1.6.0-cuda10.1-cudnn7-devel
@@ -35,13 +33,13 @@ build:
 run:
   cmd:
     # Allow to access the mounted data_folder as if it was in ./data
-    - ln -s /data/etienneb ./data
+    - ln -s /media/etienneb ./data
     # Allow to access the mounted output_folder as if it was in ./output
     - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
     # Create grid
     - 'echo "N_SOURCE = {{ n_source }}" >> ./configs/training_config.py'
     - 'echo "N_TARGET = {{ n_target }}" >> ./configs/training_config.py'
-    - 'echo "RANDOM_SEED = {{ random_seed }}" >> ./configs/experiment_config.py'
+#    - 'echo "RANDOM_SEED = {{ random_seed }}" >> ./configs/experiment_config.py'
 #    - 'echo "lambda_cost={{ lambda_cost }})" >> ./configs/model_config.py'
     # Run the experiment
     - python -m scripts.run_experiment

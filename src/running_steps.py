@@ -9,6 +9,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from loguru import logger
 
+import configs.evaluation_config
 import configs.training_config
 from configs import (
     training_config,
@@ -159,10 +160,10 @@ def eval_model(model):
     logger.info("Initializing test data...")
     test_loader, test_dataset = get_episodic_loader(
         "test",
-        n_way=configs.training_config.N_WAY_EVAL,
-        n_source=configs.training_config.N_SOURCE_EVAL,
-        n_target=configs.training_config.N_TARGET_EVAL,
-        n_episodes=configs.training_config.N_TASKS_EVAL,
+        n_way=configs.evaluation_config.N_WAY_EVAL,
+        n_source=configs.evaluation_config.N_SOURCE_EVAL,
+        n_target=configs.evaluation_config.N_TARGET_EVAL,
+        n_episodes=configs.evaluation_config.N_TASKS_EVAL,
     )
 
     logger.info("Starting model evaluation...")
