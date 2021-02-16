@@ -71,7 +71,7 @@ class RelationNet(nn.Module):
             x = x.reshape(-1, 64, 2, 2)
         elif self.num_features == 1600:
             x = x.reshape(-1, 64, 5, 5)
-        x = self.conv_1(x)
+        x = self.conv(x)
         sigma = self.net(x)
         return sigma
 
