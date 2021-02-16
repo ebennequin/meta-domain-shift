@@ -29,44 +29,42 @@ class BeforeCorruptionSampler(Sampler):
             else:
                 self.items_per_label[label] = [item]
 
-        self.source_items_per_label = {}
-        self.target_items_per_label = {}
-
     def __len__(self):
         return self.n_episodes
 
-    def _split_source_target(self):
-        self.source_items_per_label = {}
-        self.target_items_per_label = {}
+    def _split_source_target(self, labels):
+        source_items_per_label = {}
+        target_items_per_label = {}
 
-        for label in list(self.items_per_label.keys()):
-            self.source_items_per_label[label], self.target_items_per_label[label] = train_test_split(
+        for label in labels:
+            source_items_per_label[label], target_items_per_label[label] = train_test_split(
                 self.items_per_label[label], 
                 train_size=0.5
             )
+        return source_items_per_label, target_items_per_label
 
-    def _sample_instances_from_label(self, label, n_samples, mode):
-        if mode == 'source':
-            items_per_label = dict(self.source_items_per_label)
-        elif mode == 'target':
-            items_per_label = dict(self.target_items_per_label)
-        
+    @staticmethod
+    def _sample_instances(items, n_samples):
         return torch.tensor(
-            items_per_label[label]
+            items
             if n_samples == -1
-            else random.sample(items_per_label[label], n_samples)
+            else random.sample(items, n_samples)
         )
 
     def _get_episode_items(self):
-        self._split_source_target()
-
         labels = random.sample(self.items_per_label.keys(), self.n_way)
+
+        source_items_per_label, target_items_per_label = self._split_source_target(labels)
+
         source_perturbation, target_perturbation = torch.randperm(self.n_domains)[:2]
 
         source_items = (
             torch.cat(
                 [
-                    self._sample_instances_from_label(label, self.n_source, 'source')
+                    self._sample_instances(
+                        source_items_per_label[label], 
+                        self.n_source
+                        )
                     for label in labels
                 ]
             )
@@ -77,7 +75,10 @@ class BeforeCorruptionSampler(Sampler):
         target_items = (
             torch.cat(
                 [
-                    self._sample_instances_from_label(label, self.n_target, 'target')
+                    self._sample_instances(
+                        target_items_per_label[label], 
+                        self.n_target
+                        )
                     for label in labels
                 ]
             )
