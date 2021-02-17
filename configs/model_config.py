@@ -1,11 +1,11 @@
 from functools import partial
 
-from src.methods.modules.batch_norm import *
+from src.modules.batch_norm import *
 
-BATCHNORM = ConventionalBatchNorm
+BATCHNORM = TransductiveBatchNorm
 
-from src.methods.modules import *
-from src.methods.modules.backbones import *
+from src.modules.backbones import *
+from src.modules import *
 from src.methods import *
 
 # Parameters of the model (method and feature extractor)

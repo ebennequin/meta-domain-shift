@@ -9,8 +9,6 @@ from torch.nn.utils.weight_norm import WeightNorm
 from configs.model_config import BATCHNORM
 from src.utils import set_device
 
-from configs.dataset_config import IMAGE_SIZE
-
 
 def init_layer(L):
     # Initialization using fan-in
@@ -354,14 +352,8 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-
-        if IMAGE_SIZE == 32:
-            self.final_feat_dim = 256
-        elif IMAGE_SIZE == 84: 
-            self.final_feat_dim = 1600
-        else:
-            raise NotImplementedError('ConvNet is not implemented for the given Image Size.')
-
+        self.final_feat_dim = 256
+        
     def forward(self, x):
         out = self.trunk(x)
         return out
