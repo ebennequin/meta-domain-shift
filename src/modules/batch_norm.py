@@ -11,7 +11,8 @@ ConventionalBatchNorm = nn.BatchNorm2d
 
 class TransductiveBatchNorm(nn.BatchNorm2d):
     def forward(self, x):
-        running_mean = set_device(torch.zeros(x.data.size()[1]))
+        # Placeholders for F.batch_norm, not used since momentum=1.
+        running_mean = set_device(torch.zeros(x.data.size()[1])) 
         running_var = set_device(torch.ones(x.data.size()[1]))
         out = F.batch_norm(
             x,
