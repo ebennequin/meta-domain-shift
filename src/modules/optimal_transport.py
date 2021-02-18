@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from src.methods.modules.sinkhorn import Sinkhorn
+from src.modules.sinkhorn import Sinkhorn
 
 
 class OptimalTransport(nn.Module):

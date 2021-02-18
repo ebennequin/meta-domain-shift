@@ -20,6 +20,7 @@ class FEMNIST(VisionDataset):
         target_transform: Optional[Callable] = None,
     ):
         transform = transforms.ToTensor()
+
         super(FEMNIST, self).__init__(
             root, transform=transform, target_transform=target_transform
         )

@@ -7,7 +7,9 @@ import torch.nn.functional as F
 from torch.nn.utils.weight_norm import WeightNorm
 
 from configs.model_config import BATCHNORM
+from configs.dataset_config import IMAGE_SIZE
 from src.utils import set_device
+
 
 
 def init_layer(L):
@@ -352,8 +354,8 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-        self.final_feat_dim = 256
-
+        self.final_feat_dim = (int(IMAGE_SIZE/16)*8)**2
+        
     def forward(self, x):
         out = self.trunk(x)
         return out
