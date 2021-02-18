@@ -19,12 +19,7 @@ class FEMNIST(VisionDataset):
         image_size: int = 28,
         target_transform: Optional[Callable] = None,
     ):
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(), 
-                transforms.Resize((32, 32))
-            ]
-        )
+        transform = transforms.ToTensor()
 
         super(FEMNIST, self).__init__(
             root, transform=transform, target_transform=target_transform
