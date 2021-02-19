@@ -147,6 +147,7 @@ class AbstractMetaLearner(nn.Module):
                         "task_id": task_id,
                         "source_domain": source_id,
                         "target_domain": target_id,
+                        "image_id": i,
                         "true_label": class_ids[labels[i]],
                         "predicted_label": [
                             class_ids[label]
