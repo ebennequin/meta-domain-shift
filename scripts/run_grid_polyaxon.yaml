@@ -38,8 +38,10 @@ run:
     - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
     # Create grid
     - 'echo "N_SOURCE = {{ n_source }}" >> ./configs/training_config.py'
-    - 'echo "N_TARGET = {{ n_target }}" >> ./configs/training_config.py'
+#    - 'echo "N_TARGET = {{ n_target }}" >> ./configs/training_config.py'
 #    - 'echo "RANDOM_SEED = {{ random_seed }}" >> ./configs/experiment_config.py'
-#    - 'echo "lambda_cost={{ lambda_cost }})" >> ./configs/model_config.py'
     # Run the experiment
     - python -m scripts.run_experiment
+    # If original algorithm had no transportation module, test with transportation module
+    - 'echo "SAVE_DIR = SECOND_EVAL_SAVE_DIR" >> ./configs/experiment_config.py'
+    - python -m scripts.eval_model --model-path=./output/best_model.tar --force-ot=True
