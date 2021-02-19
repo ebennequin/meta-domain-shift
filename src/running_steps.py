@@ -28,7 +28,9 @@ def prepare_output():
                 directory=experiment_config.SAVE_DIR,
             )
 
-        experiment_config.SAVE_DIR.mkdir(parents=True, exist_ok=False)
+        experiment_config.SAVE_DIR.mkdir(
+            parents=True, exist_ok=experiment_config.USE_POLYAXON
+        )
         logger.add(experiment_config.SAVE_DIR / "running.log")
         copy_tree("configs", str(experiment_config.SAVE_DIR / "experiment_parameters"))
         logger.info(
@@ -138,8 +140,11 @@ def train_model():
     return model
 
 
-def load_model(state_path: Path, episodic: bool, use_fc: bool):
+def load_model(state_path: Path, episodic: bool, use_fc: bool, force_ot: bool):
     model = set_device(model_config.MODEL(model_config.BACKBONE))
+    if force_ot:
+        model.transportation_module = model_config.TRANSPORTATION_MODULE
+        logger.info("Forced the Optimal Transport module into the model.")
     state_dict = torch.load(state_path)
     if not episodic:
         state_dict = (

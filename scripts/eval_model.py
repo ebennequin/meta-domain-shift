@@ -28,18 +28,24 @@ Evaluate a trained model.
     default=True,
 )
 @click.option(
-    "--use_fc",
+    "--use-fc",
     help="Whether the model load the fc layer in the backbone",
     type=bool,
     default=False,
 )
+@click.option(
+    "--force-ot",
+    help="If True, will force a transportation module into the model",
+    type=bool,
+    default=False,
+)
 @click.command()
-def main(model_path: Path, episodic: bool, use_fc: bool):
+def main(model_path: Path, episodic: bool, use_fc: bool, force_ot: bool):
     prepare_output()
+
+    trained_model = load_model(model_path, episodic, use_fc, force_ot)
+
     set_and_print_random_seed()
-
-    trained_model = load_model(model_path, episodic, use_fc)
-
     eval_model(trained_model)
 
 

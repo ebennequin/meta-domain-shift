@@ -1,6 +1,7 @@
 from torch import nn
 from torch.utils.data import DataLoader
 
+from configs import dataset_config
 from src.running_steps import *
 
 
@@ -22,7 +23,7 @@ def main():
         dataset=dataset_config.DATASET.__name__,
     )
     train_set = dataset_config.DATASET(
-        dataset_config.DATA_ROOT, "val", dataset_config.IMAGE_SIZE
+        dataset_config.DATA_ROOT, "train", dataset_config.IMAGE_SIZE
     )
     train_loader = DataLoader(train_set, batch_size=64)
     n_classes = len(train_set.id_to_class)

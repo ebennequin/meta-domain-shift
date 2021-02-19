@@ -6,7 +6,6 @@ from src.modules.backbones import *
 from src.methods.utils import softplus
 
 
-
 class MultiLayerPerceptron(nn.Module):
     def __init__(self, num_features):
         super(MultiLayerPerceptron, self).__init__()
@@ -29,10 +28,11 @@ class MultiLayerPerceptron(nn.Module):
 
 class RelationNet(nn.Module):
     """
-        RelationNet for Transductive Propagation Net.
-        Used for scaling the similarity.
-        Uses a ConvNet architecture.
+    RelationNet for Transductive Propagation Net.
+    Used for scaling the similarity.
+    Uses a ConvNet architecture.
     """
+
     def __init__(self, num_features):
         super(RelationNet, self).__init__()
 
@@ -41,21 +41,13 @@ class RelationNet(nn.Module):
         self.lin_3 = nn.Linear(8, 1)
 
         # We enforce to start from sigma=1. to prevent learning failure. MANDATORY!
-        self.lin_3.weight.data.fill_(0.)
-        self.lin_3.bias.data.fill_(1.)
+        self.lin_3.weight.data.fill_(0.0)
+        self.lin_3.bias.data.fill_(1.0)
 
         relu = nn.ReLU()
 
-        self.net = nn.Sequential(
-            self.lin_1, 
-            relu,
-            self.lin_2, 
-            relu, 
-            self.lin_3
-        )
+        self.net = nn.Sequential(self.lin_1, relu, self.lin_2, relu, self.lin_3)
 
     def forward(self, x):
         sigma = self.net(x)
         return sigma
-
-

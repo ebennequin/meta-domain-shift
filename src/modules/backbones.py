@@ -11,7 +11,6 @@ from configs.dataset_config import IMAGE_SIZE
 from src.utils import set_device
 
 
-
 def init_layer(L):
     # Initialization using fan-in
     if isinstance(L, nn.Conv2d):
@@ -354,8 +353,8 @@ class ConvNet(nn.Module):
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
-        self.final_feat_dim = (int(IMAGE_SIZE/16)*8)**2
-        
+        self.final_feat_dim = (int(IMAGE_SIZE / 16) * 8) ** 2
+
     def forward(self, x):
         out = self.trunk(x)
         return out

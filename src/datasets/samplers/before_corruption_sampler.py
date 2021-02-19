@@ -37,34 +37,31 @@ class BeforeCorruptionSampler(Sampler):
         target_items_per_label = {}
 
         for label in labels:
-            source_items_per_label[label], target_items_per_label[label] = train_test_split(
-                self.items_per_label[label], 
-                train_size=0.5
-            )
+            (
+                source_items_per_label[label],
+                target_items_per_label[label],
+            ) = train_test_split(self.items_per_label[label], train_size=0.5)
         return source_items_per_label, target_items_per_label
 
     @staticmethod
     def _sample_instances(items, n_samples):
         return torch.tensor(
-            items
-            if n_samples == -1
-            else random.sample(items, n_samples)
+            items if n_samples == -1 else random.sample(items, n_samples)
         )
 
     def _get_episode_items(self):
         labels = random.sample(self.items_per_label.keys(), self.n_way)
 
-        source_items_per_label, target_items_per_label = self._split_source_target(labels)
+        source_items_per_label, target_items_per_label = self._split_source_target(
+            labels
+        )
 
         source_perturbation, target_perturbation = torch.randperm(self.n_domains)[:2]
 
         source_items = (
             torch.cat(
                 [
-                    self._sample_instances(
-                        source_items_per_label[label], 
-                        self.n_source
-                        )
+                    self._sample_instances(source_items_per_label[label], self.n_source)
                     for label in labels
                 ]
             )
@@ -75,10 +72,7 @@ class BeforeCorruptionSampler(Sampler):
         target_items = (
             torch.cat(
                 [
-                    self._sample_instances(
-                        target_items_per_label[label], 
-                        self.n_target
-                        )
+                    self._sample_instances(target_items_per_label[label], self.n_target)
                     for label in labels
                 ]
             )
