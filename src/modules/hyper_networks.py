@@ -40,9 +40,13 @@ class RelationNet(nn.Module):
         self.lin_2 = nn.Linear(64, 8)
         self.lin_3 = nn.Linear(8, 1)
 
-        # We enforce to start from sigma=1. to prevent learning failure. MANDATORY!
+        # We enforce to start from sigma=0.1 to prevent learning failure. MANDATORY!
+        self.lin_1.weight.data.fill_(0.0)
+        self.lin_1.bias.data.fill_(0.1)
+        self.lin_2.weight.data.fill_(0.0)
+        self.lin_2.bias.data.fill_(0.1)
         self.lin_3.weight.data.fill_(0.0)
-        self.lin_3.bias.data.fill_(1.0)
+        self.lin_3.bias.data.fill_(0.1)
 
         relu = nn.ReLU()
 
