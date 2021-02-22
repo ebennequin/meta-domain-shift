@@ -68,13 +68,12 @@ class TransPropNet(AbstractMetaLearner):
 
         similarity = torch.exp(-0.5 * euclidean_dist(z, z) / z.shape[1])
 
-        # Keep only top k values in the similarity matrix, set 0. otherwise.
-        _, idx = similarity.topk(self.k, dim=1)
+        if similarity.shape[1] > self.k:
+            # Keep only top k values in the similarity matrix, set 0. otherwise.
+            _, indices = similarity.topk(self.k, dim=1)
+            similarity = similarity - similarity.scatter(1, indices, 0)
 
-        similarity_del = similarity.clone()
-        similarity_del.scatter_(1, idx, 0)
-
-        return similarity - similarity_del
+        return similarity
 
     def propagate(self, laplacian, support_labels):
         """
