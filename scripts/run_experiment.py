@@ -1,4 +1,5 @@
 import torch
+from polyaxon_client.tracking import Experiment
 
 from src.running_steps import (
     train_model,
@@ -12,6 +13,8 @@ Run a complete experiment (training + evaluation)
 """
 
 if __name__ == "__main__":
+    # Warning: this fails if outside a polyaxon managed container
+    experiment = Experiment()
 
     prepare_output()
 
@@ -20,4 +23,6 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
 
     set_and_print_random_seed()
-    eval_model(trained_model)
+    acc = eval_model(trained_model)
+
+    experiment.log_metrics(accuracy=acc)
