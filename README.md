@@ -33,7 +33,7 @@ Configure your experiment by changing the values in `configs/*.py`, then launch 
 ```python scripts/run_experiment.py```
 
 On some machines, the `src` module will not be found by Python. If this happens to you, run
-`export PYTHONPATH=path/to/meta-domain-shift` to tell Python where you're at.
+`export PYTHONPATH=$PYTHONPATH:path/to/meta-domain-shift` to tell Python where you're at.
 
 All outputs of the experiment (explicit configuration, logs, trained model state and TensorBoard logs) 
 can then be found in the directory specified in `configs/experiment_config.py`. By default, an error will be risen if 
