@@ -20,4 +20,4 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
 
     set_and_print_random_seed()
-    acc = eval_model(trained_model)
+    eval_model(trained_model)
