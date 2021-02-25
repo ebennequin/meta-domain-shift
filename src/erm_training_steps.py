@@ -152,7 +152,7 @@ def validation(model: nn.Module, data_loader: DataLoader, n_batches: int) -> flo
                 )
                 / len(labels)
             )
-            tqdm_val.set_postfix(loss=np.asarray(val_acc_list).mean())
+            tqdm_val.set_postfix(accuracy=np.asarray(val_acc_list).mean())
 
     return np.asarray(val_acc_list).mean()
 
