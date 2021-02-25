@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.datasets import CIFAR100CMeta
+from src.data_tools.datasets import CIFAR100CMeta
 
 DATASET = CIFAR100CMeta
 IMAGE_SIZE = 32

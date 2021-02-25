@@ -9,9 +9,9 @@ import numpy as np
 from torchvision.datasets import CIFAR10, CIFAR100
 
 from configs.dataset_specs.cifar_100_c.perturbation_params import PERTURBATION_PARAMS
-from src.datasets.samplers import BeforeCorruptionSampler
-from src.datasets.transform import TransformLoader
-from src.datasets.utils import get_perturbations
+from src.data_tools.samplers import BeforeCorruptionSampler
+from src.data_tools.transform import TransformLoader
+from src.data_tools.utils import get_perturbations
 
 
 class CIFAR100CMeta(CIFAR100):

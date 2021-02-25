@@ -229,12 +229,12 @@ def fog(x, severity_params, image_size):
 def frost(x, severity_params, image_size):
     idx = np.random.randint(5)
     filename = [
-        "src/datasets/filters/frost2.png",
-        "src/datasets/filters/frost3.png",
-        "src/datasets/filters/frost1.png",
-        "src/datasets/filters/frost4.jpg",
-        "src/datasets/filters/frost5.jpg",
-        "src/datasets/filters/frost6.jpg",
+        "src/data_tools/filters/frost2.png",
+        "src/data_tools/filters/frost3.png",
+        "src/data_tools/filters/frost1.png",
+        "src/data_tools/filters/frost4.jpg",
+        "src/data_tools/filters/frost5.jpg",
+        "src/data_tools/filters/frost6.jpg",
     ][idx]
     # TODO: this is a bit dirty. We have a non reproducible bug here and we need to find out what's what.
     while True:

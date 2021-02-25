@@ -1,7 +1,7 @@
 from functools import partial
 from pathlib import Path
 
-from src.datasets import TieredImageNetC
+from src.data_tools.datasets import TieredImageNetC
 
 """
 Config for tieredImageNet-C where all corrupted images are explicitly written on disk.

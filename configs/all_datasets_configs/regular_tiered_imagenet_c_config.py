@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.datasets import TieredImageNetC
+from src.data_tools.datasets import TieredImageNetC
 
 """
 Config for tieredImageNet-C using raw ILSVRC2015 images.

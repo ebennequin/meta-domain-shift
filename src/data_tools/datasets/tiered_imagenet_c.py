@@ -17,9 +17,9 @@ from tqdm import tqdm
 from configs.dataset_specs.tiered_imagenet_c.perturbation_params import (
     PERTURBATION_PARAMS,
 )
-from src.datasets.samplers import AfterCorruptionSampler, BeforeCorruptionSampler
-from src.datasets.transform import TransformLoader
-from src.datasets.utils import get_perturbations
+from src.data_tools.samplers import AfterCorruptionSampler, BeforeCorruptionSampler
+from src.data_tools.transform import TransformLoader
+from src.data_tools.utils import get_perturbations
 
 
 class TieredImageNetC(VisionDataset):

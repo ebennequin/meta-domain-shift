@@ -5,7 +5,7 @@ from loguru import logger
 from torchvision import transforms
 from tqdm import tqdm
 
-from src.datasets import TieredImageNetC
+from src.data_tools.datasets import TieredImageNetC
 
 
 @click.option(
