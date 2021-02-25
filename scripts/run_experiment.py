@@ -1,3 +1,7 @@
+"""
+Run a complete experiment (training + evaluation)
+"""
+
 import torch
 
 from src.running_steps import (
@@ -6,10 +10,6 @@ from src.running_steps import (
     set_and_print_random_seed,
     prepare_output,
 )
-
-"""
-Run a complete experiment (training + evaluation)
-"""
 
 if __name__ == "__main__":
 

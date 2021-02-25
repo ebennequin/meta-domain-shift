@@ -1,3 +1,7 @@
+"""
+Evaluate a trained model.
+"""
+
 from pathlib import Path
 
 import click
@@ -9,10 +13,6 @@ from src.running_steps import (
     set_and_print_random_seed,
     prepare_output,
 )
-
-"""
-Evaluate a trained model.
-"""
 
 
 @click.option(

@@ -179,5 +179,7 @@ def eval_model(model):
     stats_df = elucidate_ids(stats_df, test_dataset)
 
     stats_df.to_csv(experiment_config.SAVE_DIR / "evaluation_stats.csv", index=False)
-
+    writer = SummaryWriter(log_dir=experiment_config.SAVE_DIR)
+    writer.add_scalar("Evaluation accuracy", acc)
+    writer.close()
     return acc
