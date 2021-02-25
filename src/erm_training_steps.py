@@ -4,7 +4,7 @@ from loguru import logger
 import numpy as np
 import torch
 from torch import nn
-from torch.utils.data import ConcatDataset, random_split, DataLoader
+from torch.utils.data import ConcatDataset, random_split, DataLoader, Dataset, Subset
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -12,11 +12,7 @@ from configs import dataset_config, erm_training_config, experiment_config, mode
 from src.utils import set_device
 
 
-def get_data() -> (DataLoader, DataLoader, int):
-    logger.info(
-        "Initializing data loaders for {dataset}...",
-        dataset=dataset_config.DATASET.__name__,
-    )
+def get_few_shot_split() -> (Dataset, Dataset):
     temp_train_set = dataset_config.DATASET(
         dataset_config.DATA_ROOT, "train", dataset_config.IMAGE_SIZE
     )
@@ -27,7 +23,6 @@ def get_data() -> (DataLoader, DataLoader, int):
         dataset_config.IMAGE_SIZE,
         target_transform=lambda label: label + temp_train_classes,
     )
-
     if dataset_config.DATASET.__name__ == "CIFAR100CMeta":
         label_mapping = {
             v: k
@@ -40,24 +35,39 @@ def get_data() -> (DataLoader, DataLoader, int):
             temp_val_set.target_transform
         ) = lambda label: label_mapping[label]
 
+    return temp_train_set, temp_val_set
+
+
+def get_non_few_shot_split(
+    temp_train_set: Dataset, temp_val_set: Dataset
+) -> (Subset, Subset):
     train_and_val_set = ConcatDataset(
         [
             temp_train_set,
             temp_val_set,
         ]
     )
-
-    # Assume that train and val classes are entirely disjoints
-    n_classes = len(temp_val_set.id_to_class) + temp_train_classes
-
-    train_images_proportion = 0.82
-    n_train_images = int(len(train_and_val_set) * train_images_proportion)
-
-    train_set, val_set = random_split(
+    n_train_images = int(
+        len(train_and_val_set) * erm_training_config.TRAIN_IMAGES_PROPORTION
+    )
+    return random_split(
         train_and_val_set,
         [n_train_images, len(train_and_val_set) - n_train_images],
-        generator=torch.Generator().manual_seed(1),
+        generator=torch.Generator().manual_seed(
+            erm_training_config.TRAIN_VAL_SPLIT_RANDOM_SEED
+        ),
     )
+
+
+def get_data() -> (DataLoader, DataLoader, int):
+    logger.info(
+        "Initializing data loaders for {dataset}...",
+        dataset=dataset_config.DATASET.__name__,
+    )
+
+    temp_train_set, temp_val_set = get_few_shot_split()
+
+    train_set, val_set = get_non_few_shot_split(temp_train_set, temp_val_set)
 
     train_loader = DataLoader(
         train_set,
@@ -70,6 +80,8 @@ def get_data() -> (DataLoader, DataLoader, int):
         batch_size=erm_training_config.BATCH_SIZE,
         num_workers=erm_training_config.N_WORKERS,
     )
+    # Assume that train and val classes are entirely disjoints
+    n_classes = len(temp_val_set.id_to_class) + len(temp_train_set.id_to_class)
 
     return train_loader, val_loader, n_classes
 

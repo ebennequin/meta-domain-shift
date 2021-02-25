@@ -9,3 +9,5 @@ N_WORKERS = 28
 OPTIMIZER = partial(
     Adam, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-04, amsgrad=False
 )
+TRAIN_IMAGES_PROPORTION = 0.82
+TRAIN_VAL_SPLIT_RANDOM_SEED = 1
