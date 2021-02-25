@@ -23,17 +23,18 @@ def get_few_shot_split() -> (Dataset, Dataset):
         dataset_config.IMAGE_SIZE,
         target_transform=lambda label: label + temp_train_classes,
     )
-    if dataset_config.DATASET.__name__ == "CIFAR100CMeta":
-        label_mapping = {
-            v: k
-            for k, v in enumerate(
-                list(temp_train_set.id_to_class.keys())
-                + list(temp_val_set.id_to_class.keys())
-            )
-        }
-        temp_train_set.target_transform = (
-            temp_val_set.target_transform
-        ) = lambda label: label_mapping[label]
+    if hasattr(dataset_config.DATASET, "__name__"):
+        if dataset_config.DATASET.__name__ == "CIFAR100CMeta":
+            label_mapping = {
+                v: k
+                for k, v in enumerate(
+                    list(temp_train_set.id_to_class.keys())
+                    + list(temp_val_set.id_to_class.keys())
+                )
+            }
+            temp_train_set.target_transform = (
+                temp_val_set.target_transform
+            ) = lambda label: label_mapping[label]
 
     return temp_train_set, temp_val_set
 
@@ -60,10 +61,7 @@ def get_non_few_shot_split(
 
 
 def get_data() -> (DataLoader, DataLoader, int):
-    logger.info(
-        "Initializing data loaders for {dataset}...",
-        dataset=dataset_config.DATASET.__name__,
-    )
+    logger.info("Initializing data loaders...")
 
     temp_train_set, temp_val_set = get_few_shot_split()
 
@@ -198,10 +196,10 @@ def train(
 
 def wrap_up_training(best_model_state: OrderedDict, best_model_epoch: int):
     logger.info(f"Training complete.")
-    logger.info(f"Best model found after {best_model_epoch} training epochs.")
+    logger.info(f"Best model found after {best_model_epoch + 1} training epochs.")
     state_dict_path = (
         experiment_config.SAVE_DIR
-        / f"{model_config.BACKBONE.__name__}_{dataset_config.DATASET.__name__}_{model_config.BATCHNORM}.tar"
+        / f"{model_config.BACKBONE.__name__}_{dataset_config.DATASET.__name__ if hasattr(dataset_config.DATASET, '__name__') else dataset_config.DATASET.func.__name__}.tar"
     )
     torch.save(best_model_state, state_dict_path)
     logger.info(f"Model state dict saved in {state_dict_path}")
