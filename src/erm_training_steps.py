@@ -1,3 +1,7 @@
+"""
+Steps used in scripts/erm_training.py
+"""
+
 from typing import OrderedDict
 
 from loguru import logger

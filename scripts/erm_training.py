@@ -1,4 +1,8 @@
-from src.erm_training_steps import *
+"""
+Train a CNN using empirical risk minimization (non-episodic training).
+"""
+
+from src.erm_training_steps import get_data, get_model, train, wrap_up_training
 from src.running_steps import prepare_output, set_and_print_random_seed
 
 
