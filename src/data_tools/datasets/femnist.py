@@ -8,7 +8,7 @@ import pandas as pd
 from torchvision.datasets import VisionDataset
 from torchvision import transforms
 
-from src.datasets.samplers import GroupedDatasetSampler
+from src.data_tools.samplers import GroupedDatasetSampler
 
 
 class FEMNIST(VisionDataset):

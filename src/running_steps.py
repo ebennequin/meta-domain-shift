@@ -6,12 +6,14 @@ from shutil import rmtree
 
 import numpy as np
 import torch
+from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from loguru import logger
 
 import configs.evaluation_config
 import configs.training_config
 from configs import (
+    dataset_config,
     training_config,
     model_config,
     experiment_config,
@@ -140,22 +142,46 @@ def train_model():
     return model
 
 
-def load_model(state_path: Path, episodic: bool, use_fc: bool, force_ot: bool):
-    model = set_device(model_config.MODEL(model_config.BACKBONE))
-    if force_ot:
-        model.transportation_module = model_config.TRANSPORTATION_MODULE
-        logger.info("Forced the Optimal Transport module into the model.")
-    state_dict = torch.load(state_path)
-    if not episodic:
-        state_dict = (
-            OrderedDict([(f"feature.{k}", v) for k, v in state_dict.items()])
-            if use_fc
-            else OrderedDict(
-                [(f"feature.{k}", v) for k, v in state_dict.items() if ".fc." not in k]
+def load_model_episodic(model: nn.Module, state_dict: OrderedDict) -> nn.Module:
+    model.load_state_dict(state_dict)
+    return model
+
+
+def load_model_non_episodic(
+    model: nn.Module, state_dict: OrderedDict, use_fc: bool
+) -> nn.Module:
+    if use_fc:
+        model.feature.trunk.fc = set_device(
+            nn.Linear(
+                model.feature.final_feat_dim,
+                dataset_config.CLASSES["train"] + dataset_config.CLASSES["val"],
             )
         )
 
-    model.load_state_dict(state_dict)
+    model.feature.load_state_dict(
+        state_dict
+        if use_fc
+        else OrderedDict([(k, v) for k, v in state_dict.items() if ".fc." not in k])
+    )
+    return model
+
+
+def load_model(
+    state_path: Path, episodic: bool, use_fc: bool, force_ot: bool
+) -> nn.Module:
+    model = set_device(model_config.MODEL(model_config.BACKBONE))
+
+    if force_ot:
+        model.transportation_module = model_config.TRANSPORTATION_MODULE
+        logger.info("Forced the Optimal Transport module into the model.")
+
+    state_dict = torch.load(state_path)
+    model = (
+        load_model_episodic(model, state_dict)
+        if episodic
+        else load_model_non_episodic(model, state_dict, use_fc)
+    )
+
     logger.info(f"Loaded model from {state_path}")
 
     return model

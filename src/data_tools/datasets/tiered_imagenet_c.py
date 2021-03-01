@@ -17,9 +17,9 @@ from tqdm import tqdm
 from configs.dataset_specs.tiered_imagenet_c.perturbation_params import (
     PERTURBATION_PARAMS,
 )
-from src.datasets.samplers import AfterCorruptionSampler, BeforeCorruptionSampler
-from src.datasets.transform import TransformLoader
-from src.datasets.utils import get_perturbations
+from src.data_tools.samplers import AfterCorruptionSampler, BeforeCorruptionSampler
+from src.data_tools.transform import TransformLoader
+from src.data_tools.utils import get_perturbations
 
 
 class TieredImageNetC(VisionDataset):
@@ -54,28 +54,35 @@ class TieredImageNetC(VisionDataset):
         self.load_corrupted_dataset = load_corrupted_dataset
         logger.info(f"Retrieving {split} images ...")
         if self.load_corrupted_dataset:
-            self.images_df = (
-                pd.concat(
-                    [
-                        pd.DataFrame(
-                            [
+            pickle_path = self.root / f"{split}.pkl"
+            if pickle_path.exists():
+                self.images_df = pd.read_pickle(pickle_path)
+            else:
+                self.images_df = (
+                    pd.concat(
+                        [
+                            pd.DataFrame(
                                 [
-                                    img_path.parts[-1],
-                                    self.domain_to_id[img_path.parts[-2]],
-                                ]
-                                for img_path in (self.root / class_name).glob("*/*.png")
-                            ],
-                            columns=["img_name", "domain_id"],
-                        ).assign(class_id=class_id)
-                        for class_name, class_id in tqdm(
-                            self.class_to_id.items(), unit="classes"
-                        )
-                    ],
-                    ignore_index=True,
+                                    [
+                                        img_path.parts[-1],
+                                        self.domain_to_id[img_path.parts[-2]],
+                                    ]
+                                    for img_path in (self.root / class_name).glob(
+                                        "*/*.png"
+                                    )
+                                ],
+                                columns=["img_name", "domain_id"],
+                            ).assign(class_id=class_id)
+                            for class_name, class_id in tqdm(
+                                self.class_to_id.items(), unit="classes"
+                            )
+                        ],
+                        ignore_index=True,
+                    )
+                    .sort_values(by=["class_id", "img_name", "domain_id"])
+                    .reset_index(drop=True)
                 )
-                .sort_values(by=["class_id", "img_name", "domain_id"])
-                .reset_index(drop=True)
-            )
+                self.images_df.to_pickle(pickle_path)
         else:
             self.images, self.labels = self.get_images_and_labels()
             self.images_df = pd.DataFrame(

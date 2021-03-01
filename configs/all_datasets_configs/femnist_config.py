@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.datasets import FEMNIST
+from src.data_tools.datasets import FEMNIST
 
 DATASET = FEMNIST
 IMAGE_SIZE = 28

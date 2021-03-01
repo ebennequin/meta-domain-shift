@@ -5,8 +5,7 @@ import torchvision
 from torch.utils.data import DataLoader
 
 from configs import dataset_config
-from src.datasets.samplers import BeforeCorruptionSampler
-from src.datasets.utils import episodic_collate_fn
+from src.data_tools.utils import episodic_collate_fn
 
 
 def set_device(x):
