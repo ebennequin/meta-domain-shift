@@ -111,9 +111,10 @@ class GaussianModel:
 
 
 class MAP(AbstractMetaLearner):
-    def __init__(self, model_func, transportation=None):
+    def __init__(self, model_func, transportation=None, power_transform=True):
         super().__init__(model_func)
         self.loss_fn = nn.NLLLoss()
+        self.power_transform = power_transform
 
     def set_forward(self, support_images, support_labels, query_images):
         """
@@ -139,11 +140,12 @@ class MAP(AbstractMetaLearner):
         labels = torch.arange(n_ways).view(1, 1, n_ways).expand(n_runs, n_shot + n_queries,
                                                                 5).clone().view(n_runs, n_samples)
 
-        # Power transform
-        beta = 0.5
-        ndatas[:, ] = torch.pow(ndatas[:, ] + 1e-6, beta)
+        if self.power_transform:
+            # Power transform
+            beta = 0.5
+            ndatas[:, ] = torch.pow(ndatas[:, ] + 1e-6, beta)
 
-        ndatas = QRreduction(ndatas)
+        ndatas = QRreduction(ndatas)    # Now ndatas has shape (1, n_samples, n_samples)
         n_nfeat = ndatas.size(2)
 
         ndatas = scaleEachUnitaryDatas(ndatas)
