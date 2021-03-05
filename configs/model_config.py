@@ -10,7 +10,7 @@ from src.methods import *
 
 # Parameters of the model (method and feature extractor)
 
-BACKBONE = Conv4
+BACKBONE = ResNet18
 
 TRANSPORTATION_MODULE = OptimalTransport(
     regularization=0.05,

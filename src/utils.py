@@ -12,7 +12,7 @@ def set_device(x):
     """
     Switch a tensor to GPU if CUDA is available, to CPU otherwise
     """
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
     return x.to(device=device)
 
 

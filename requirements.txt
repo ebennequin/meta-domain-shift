@@ -7,7 +7,6 @@ opencv-python>=4.4.0.46
 pandas>=0.24.2
 pathlib>=1.0.1
 Pillow>=6.0.0
-polyaxon-cli==0.6.1
 scikit-image>=0.17.2
 scikit-learn>=0.23.2
 tensorboard>=2.4.0
