@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from time import time
 
 from loguru import logger
 import numpy as np
@@ -175,6 +176,8 @@ class AbstractMetaLearner(nn.Module):
 
         loss_list = []
         acc_list = []
+        t_0 = time()
+
         for episode_index, (
             support_images,
             support_labels,
@@ -184,6 +187,12 @@ class AbstractMetaLearner(nn.Module):
             _,
             _,
         ) in enumerate(train_loader):
+            logger.info(f"support_images: {support_images.shape}")
+            logger.info(f"support_labels: {support_labels.shape}")
+            logger.info(f"query_images: {query_images.shape}")
+            logger.info(f"query_labels: {query_labels.shape}")
+
+            t_1 = time()
             query_labels = set_device(query_labels)
             scores, loss_value = self.fit_on_task(
                 support_images, support_labels, query_images, query_labels, optimizer
@@ -193,15 +202,27 @@ class AbstractMetaLearner(nn.Module):
 
             acc_list.append(self.evaluate(scores, query_labels) * 100)
 
-            if episode_index % print_freq == print_freq - 1:
-                logger.info(
-                    "Epoch {epoch} | Batch {episode_index}/{n_batches} | Loss {loss}".format(
-                        epoch=epoch,
-                        episode_index=episode_index + 1,
-                        n_batches=len(train_loader),
-                        loss=np.asarray(loss_list).mean(),
-                    )
-                )
+            t_2 = time()
+            fetch_data_duration = t_1 - t_0
+            fit_on_task_duration = t_2 - t_1
+
+            logger.info({
+                "episode_index": episode_index,
+                "n_batches": len(train_loader),
+                "fetch_data_duration": fetch_data_duration,
+                "fit_on_task_duration": fit_on_task_duration,
+            })
+
+            t_0 = time()
+#            if episode_index % print_freq == print_freq - 1:
+#                 logger.info(
+#                     "Epoch {epoch} | Batch {episode_index}/{n_batches} | Loss {loss}".format(
+#                         epoch=epoch,
+#                         episode_index=episode_index + 1,
+#                         n_batches=len(train_loader),
+#                         loss=np.asarray(loss_list).mean(),
+#                     )
+#                 )
 
         return np.asarray(loss_list).mean(), np.asarray(acc_list).mean()
 
