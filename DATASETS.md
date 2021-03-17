@@ -30,7 +30,7 @@ By default, these perturbations are applied online to the images when loaded fro
 This is very costly in CPU usage. 
 
 If this doesn't work on your machine, run 
-`python -m scripts/datasets/write_tieredimagenet_c.py --input-dir=path/to/ILSVRC2015/Data/CLS-LOC/train --output-dir=where/you/want` 
+`python -m scripts/datasets/write_tieredimagenet_c --input-dir=path/to/ILSVRC2015/Data/CLS-LOC/train --output-dir=where/you/want`
 to write the corrupted dataset explicitly on your disk. This process may take a long time to run and will need 2.1TB of disk
 space, but it will bless you with smooth and quick experiments on *tiered*ImageNet-C. To use the corrupted dataset in your
 experiments, in `./configs/dataset_config.py`, import the content of `configs.all_datasets_configs.corrupted_tiered_imagenet_c_configs`.
@@ -44,7 +44,7 @@ we separate both users and classes between train, val and test sets.
 
 First, you need to download the FEMNIST dataset into `./data/femnist` 
 by running `source scripts/datasets/download_femnist.sh`
-Then run `python -m scripts.datasets.preprocess_femnist.py`. This will write the images of FEMNIST-FewShot
+Then run `python -m scripts.datasets.preprocess_femnist`. This will write the images of FEMNIST-FewShot
 (defined in the specification files `./configs/dataset_specs/femnist/*.csv`) into three numpy files, for train,
 val and test sets. 
 
