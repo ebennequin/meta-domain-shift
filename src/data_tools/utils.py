@@ -1,7 +1,8 @@
+import cv2
+from functools import partial
 import re
 
-from functools import partial
-
+import numpy as np
 import torch
 
 from src.data_tools.perturbations import PERTURBATIONS
@@ -91,3 +92,9 @@ def get_perturbations(perturbation_specs, perturbation_params, image_size):
 
 def clean_name(name, banned_characters="[^A-Za-z0-9]+", fill_item="_"):
     return re.sub(banned_characters, fill_item, name)
+
+
+def load_image_as_array(filename, image_size):
+    return np.asarray(
+        cv2.resize(cv2.imread(filename)[..., ::-1], (image_size, image_size))
+    )
