@@ -30,9 +30,7 @@ class Sinkhorn(nn.Module):
         self.eps = eps
 
         if self.eps_parameter:
-            self.eps = torch.nn.Parameter(
-                torch.tensor(self.eps)
-                )
+            self.eps = torch.nn.Parameter(torch.tensor(self.eps))
 
         self.max_iter = max_iter
         self.thresh = thresh

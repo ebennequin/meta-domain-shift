@@ -14,4 +14,4 @@ OPTIMIZER = partial(
     Adam, lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-04, amsgrad=False
 )
 # Set the following to None to avoid using test set during training
-TEST_SET_VALIDATION_FREQUENCY = 21
+TEST_SET_VALIDATION_FREQUENCY = None
