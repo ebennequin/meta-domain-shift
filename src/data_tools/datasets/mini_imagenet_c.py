@@ -75,7 +75,7 @@ class MiniImageNetC(VisionDataset):
             self.labels[original_data_index],
         )
 
-        img = self.perturbations[perturbation_index](self.images[item])
+        img = self.perturbations[perturbation_index](img)
 
         if self.transform is not None:
             # TODO: some perturbations output arrays, some output images. We need to clean that.
