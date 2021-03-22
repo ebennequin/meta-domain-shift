@@ -1,9 +1,9 @@
-import numpy as np
-from torch import nn as nn
-import math
-from src.modules.backbones import *
+import torch
+from torch.autograd import Variable
+from torch import nn
 
 from src.methods.utils import softplus
+from src.utils import set_device
 
 
 class MultiLayerPerceptron(nn.Module):
@@ -55,3 +55,30 @@ class RelationNet(nn.Module):
     def forward(self, x):
         sigma = self.net(x)
         return sigma
+
+
+class FullyContextualEmbedding(nn.Module):
+    """
+    See Vinyals et al. (Matching networks for One-Shot Learning)
+    """
+
+    def __init__(self, num_features):
+        super(FullyContextualEmbedding, self).__init__()
+        self.lstm_cell = set_device(nn.LSTMCell(num_features * 2, num_features))
+        self.softmax = nn.Softmax()
+        self.c_0 = set_device(Variable(torch.zeros(1, num_features)))
+
+    def forward(self, query_features, encoded_support_features):
+        h = query_features
+        c = self.c_0.expand_as(query_features)
+        K = encoded_support_features.size(0)  # Tuna to be comfirmed
+        for k in range(K):
+            logit_a = h.mm(encoded_support_features.T)
+            a = self.softmax(logit_a)
+            r = a.mm(encoded_support_features)
+            x = torch.cat((query_features, r), 1)
+
+            h, c = self.lstm_cell(x, (h, c))
+            h = h + query_features
+
+        return h

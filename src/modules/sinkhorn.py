@@ -22,9 +22,18 @@ class Sinkhorn(nn.Module):
         - Output: :math:`(N)` or :math:`()`, depending on `reduction`
     """
 
-    def __init__(self, eps, max_iter, thresh, reduction="none"):
+    def __init__(self, eps, eps_parameter, max_iter, thresh, reduction="none"):
         super(Sinkhorn, self).__init__()
+
+        self.eps_parameter = eps_parameter
+
         self.eps = eps
+
+        if self.eps_parameter:
+            self.eps = torch.nn.Parameter(
+                torch.tensor(self.eps)
+                )
+
         self.max_iter = max_iter
         self.thresh = thresh
         self.reduction = reduction
