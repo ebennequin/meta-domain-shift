@@ -27,8 +27,8 @@ class Sinkhorn(nn.Module):
 
         self.eps_parameter = eps_parameter
 
+        #TODO: very dirty: makes the typing of eps unknown, plus it breaks the load_state_dict of OT-less models
         self.eps = eps
-
         if self.eps_parameter:
             self.eps = torch.nn.Parameter(torch.tensor(self.eps))
 
