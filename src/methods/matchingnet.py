@@ -78,9 +78,7 @@ class MatchingNet(AbstractMetaLearner):
         logprobs = (scores.mm(one_hot_support_labels) + 1e-6).log()
         return logprobs
 
-    def set_forward(
-        self, support_images, support_labels, query_images
-    ):
+    def set_forward(self, support_images, support_labels, query_images):
         """
         Overwrites method set_forward in AbstractMetaLearner.
         """

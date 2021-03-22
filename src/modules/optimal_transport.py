@@ -7,9 +7,13 @@ from src.modules.sinkhorn import Sinkhorn
 
 class OptimalTransport(nn.Module):
     def __init__(self, regularization, max_iter, stopping_criterion, learn_regularization=False, power_transform=None):
+
         super(OptimalTransport, self).__init__()
         self.sinkhorn = Sinkhorn(
-            eps=regularization, max_iter=max_iter, thresh=stopping_criterion, eps_parameter=learn_regularization
+            eps=regularization,
+            max_iter=max_iter,
+            thresh=stopping_criterion,
+            eps_parameter=learn_regularization,
         )
         self.beta = power_transform
 
