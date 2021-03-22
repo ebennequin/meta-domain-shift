@@ -1,15 +1,17 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 from src.modules.sinkhorn import Sinkhorn
 
 
 class OptimalTransport(nn.Module):
-    def __init__(self, regularization, max_iter, stopping_criterion, learn_regularization=False):
+    def __init__(self, regularization, max_iter, stopping_criterion, learn_regularization=False, power_transform=None):
         super(OptimalTransport, self).__init__()
         self.sinkhorn = Sinkhorn(
             eps=regularization, max_iter=max_iter, thresh=stopping_criterion, eps_parameter=learn_regularization
         )
+        self.beta = power_transform
 
     def forward(self, z_support, z_query):
         """
@@ -22,6 +24,9 @@ class OptimalTransport(nn.Module):
             tuple(torch.Tensor, torch.Tensor) : resp. transported support set features,
                 and unmodified query set features
         """
+        if self.beta:
+            z_support = F.normalize(torch.pow(z_support + 1e-6, self.beta))
+            z_query = F.normalize(torch.pow(z_query + 1e-6, self.beta))
 
         _, transport_plan, _ = self.sinkhorn(z_support, z_query)
 
