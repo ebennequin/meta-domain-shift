@@ -45,8 +45,18 @@ def QRreduction(datas):
 
 # ---------  GaussianModel
 class GaussianModel:
-    def __init__(self, n_ways, lam, ndatas, n_runs, n_shot, n_queries, n_nfeat, n_lsamples,
-                 n_usamples):
+    def __init__(
+        self,
+        n_ways,
+        lam,
+        ndatas,
+        n_runs,
+        n_shot,
+        n_queries,
+        n_nfeat,
+        n_lsamples,
+        n_usamples,
+    ):
         self.n_ways = n_ways
         self.mus = None  # shape [n_runs][n_ways][n_nfeat]
         self.lam = lam
@@ -54,7 +64,10 @@ class GaussianModel:
         self.n_queries = n_queries
         self.n_lsamples = n_lsamples
         self.n_usamples = n_usamples
-        self.mus = ndatas.reshape(n_runs, n_shot + n_queries, n_ways, n_nfeat)[:, :n_shot, ].mean(1)
+        self.mus = ndatas.reshape(n_runs, n_shot + n_queries, n_ways, n_nfeat)[
+            :,
+            :n_shot,
+        ].mean(1)
 
     def cuda(self):
         # Inplace
@@ -70,7 +83,7 @@ class GaussianModel:
         r = r.cuda()
         c = c.cuda()
         n_runs, n, m = M.shape
-        P = torch.exp(- self.lam * M)
+        P = torch.exp(-self.lam * M)
         P = P / P.view((n_runs, -1)).sum(1).unsqueeze(1).unsqueeze(1)
 
         u = torch.zeros(n_runs, n).cuda()
@@ -94,12 +107,14 @@ class GaussianModel:
         r = torch.ones(self.n_runs, self.n_usamples)
         c = torch.ones(self.n_runs, self.n_ways) * self.n_queries
 
-        p_xj_test, _ = self.compute_optimal_transport(dist[:, self.n_lsamples:], r, c, epsilon=1e-6)
-        p_xj[:, self.n_lsamples:] = p_xj_test
+        p_xj_test, _ = self.compute_optimal_transport(
+            dist[:, self.n_lsamples :], r, c, epsilon=1e-6
+        )
+        p_xj[:, self.n_lsamples :] = p_xj_test
 
-        p_xj[:, :self.n_lsamples] = p_xj[:, :self.n_lsamples].scatter(2, labels[:,
-                                                                         :self.n_lsamples].unsqueeze(
-            2), 1)
+        p_xj[:, : self.n_lsamples] = p_xj[:, : self.n_lsamples].scatter(
+            2, labels[:, : self.n_lsamples].unsqueeze(2), 1
+        )
 
         return p_xj
 
@@ -134,18 +149,33 @@ class MAP(AbstractMetaLearner):
         label_mapping = support_labels.view(n_ways, n_shot).permute(1, 0).sort()[1][0]
 
         support_mapping = torch.cat([label_mapping * n_shot + i for i in range(n_shot)])
-        query_mapping = torch.cat([label_mapping * n_queries + i for i in range(n_queries)])
+        query_mapping = torch.cat(
+            [label_mapping * n_queries + i for i in range(n_queries)]
+        )
 
-        ndatas = torch.cat((z_support[support_mapping], z_query[query_mapping]), dim=0).unsqueeze(0)
-        labels = torch.arange(n_ways).view(1, 1, n_ways).expand(n_runs, n_shot + n_queries,
-                                                                5).clone().view(n_runs, n_samples)
+        ndatas = torch.cat(
+            (z_support[support_mapping], z_query[query_mapping]), dim=0
+        ).unsqueeze(0)
+        labels = (
+            torch.arange(n_ways)
+            .view(1, 1, n_ways)
+            .expand(n_runs, n_shot + n_queries, 5)
+            .clone()
+            .view(n_runs, n_samples)
+        )
 
         if self.power_transform:
             # Power transform
             beta = 0.5
-            ndatas[:, ] = torch.pow(ndatas[:, ] + 1e-6, beta)
+            ndatas[:,] = torch.pow(
+                ndatas[
+                    :,
+                ]
+                + 1e-6,
+                beta,
+            )
 
-        ndatas = QRreduction(ndatas)    # Now ndatas has shape (1, n_samples, n_samples)
+        ndatas = QRreduction(ndatas)  # Now ndatas has shape (1, n_samples, n_samples)
         n_nfeat = ndatas.size(2)
 
         ndatas = scaleEachUnitaryDatas(ndatas)
@@ -162,8 +192,17 @@ class MAP(AbstractMetaLearner):
 
         # MAP
         lam = 10
-        model = GaussianModel(n_ways, lam, ndatas, n_runs, n_shot, n_queries, n_nfeat, n_lsamples,
-                              n_usamples)
+        model = GaussianModel(
+            n_ways,
+            lam,
+            ndatas,
+            n_runs,
+            n_shot,
+            n_queries,
+            n_nfeat,
+            n_lsamples,
+            n_usamples,
+        )
 
         self.alpha = 0.2
 
@@ -179,7 +218,7 @@ class MAP(AbstractMetaLearner):
     def getAccuracy(self, probas, labels):
         olabels = probas.argmax(dim=2)
         matches = labels.eq(olabels).float()
-        acc_test = matches[:, self.n_lsamples:].mean(1)
+        acc_test = matches[:, self.n_lsamples :].mean(1)
 
         m = acc_test.mean().item()
         pm = acc_test.std().item() * 1.96 / math.sqrt(self.n_runs)

@@ -6,7 +6,14 @@ from src.modules.sinkhorn import Sinkhorn
 
 
 class OptimalTransport(nn.Module):
-    def __init__(self, regularization, max_iter, stopping_criterion, learn_regularization=False, power_transform=None):
+    def __init__(
+        self,
+        regularization,
+        max_iter,
+        stopping_criterion,
+        learn_regularization=False,
+        power_transform=None,
+    ):
 
         super(OptimalTransport, self).__init__()
         self.sinkhorn = Sinkhorn(

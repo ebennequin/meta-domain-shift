@@ -5,6 +5,8 @@ from torch.utils.data import Sampler
 
 from sklearn.model_selection import train_test_split
 
+from configs.evaluation_config import SUPPORT_QUERY_SHIFT
+
 
 class BeforeCorruptionSampler(Sampler):
     """
@@ -56,7 +58,13 @@ class BeforeCorruptionSampler(Sampler):
             labels
         )
 
-        source_perturbation, target_perturbation = torch.randperm(self.n_domains)[:2]
+        if SUPPORT_QUERY_SHIFT:
+            source_perturbation, target_perturbation = torch.randperm(self.n_domains)[
+                :2
+            ]
+        else:
+            source_perturbation = torch.randperm(self.n_domains)[:1]
+            target_perturbation = source_perturbation
 
         source_items = (
             torch.cat(
