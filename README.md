@@ -22,7 +22,7 @@ source venv/bin/activate
 ```
 
 Then install dependencies: `pip install -r requirements.txt`
-Some perturbations used in CIFAR-100-C-FewShot and *tiered*ImageNet-C use Wand: `sudo apt-get install libmagickwand-dev`
+Some perturbations used in CIFAR-100-C-FewShot and *mini*ImageNet-C use Wand: `sudo apt-get install libmagickwand-dev`
 
 ## Data
 To install the datasets to your machine, please follow [this walkthrough](DATASETS.md).
@@ -30,7 +30,7 @@ To install the datasets to your machine, please follow [this walkthrough](DATASE
 ## Run an experiment
 
 Configure your experiment by changing the values in `configs/*.py`, then launch your experiment.
-```python scripts/run_experiment.py```
+```python -m scripts.run_experiment```
 
 On some machines, the `src` module will not be found by Python. If this happens to you, run
 `export PYTHONPATH=$PYTHONPATH:path/to/meta-domain-shift` to tell Python where you're at.
@@ -39,6 +39,10 @@ All outputs of the experiment (explicit configuration, logs, trained model state
 can then be found in the directory specified in `configs/experiment_config.py`. By default, an error will be risen if 
 the specified directory already exists (in order to not harm the results of previous experiments). You may
 change this behaviour in `configs/experiment_config.py` by setting `OVERWRITE = True`.
+
+### Reproducing results
+
+See the detailed documentation [here](REPRODUCING.md).
 
 ### Track trainings with Tensorboard
 
