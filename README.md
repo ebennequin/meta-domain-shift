@@ -22,7 +22,7 @@ source venv/bin/activate
 ```
 
 Then install dependencies: `pip install -r requirements.txt`
-Some perturbations used in CIFAR-100-C-FewShot and *tiered*ImageNet-C use Wand: `sudo apt-get install libmagickwand-dev`
+Some perturbations used in CIFAR-100-C-FewShot and *mini*ImageNet-C use Wand: `sudo apt-get install libmagickwand-dev`
 
 ## Data
 To install the datasets to your machine, please follow [this walkthrough](DATASETS.md).

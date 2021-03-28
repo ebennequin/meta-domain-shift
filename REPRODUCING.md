@@ -38,14 +38,23 @@
 
 You can configure your experiments in `configs/`.
 
-- Choose the dataset: select the appropriate import in `configs/dataset_config.py`
-- Specify the dataset's config (location on disk, etc...): edit `configs/all_datasets_configs/<dataset>_config.py`
+- To choose the dataset: select the appropriate import in `configs/dataset_config.py`
+- To specify the dataset's config (location on disk, etc...): edit `configs/all_datasets_configs/<dataset>_config.py`
 - Training config: edit `configs/training_config.py`. All parameters are the same for all experiments we ran, except `N_SOURCE` (1 or 5) and `N_TARGET` (8 or 16).
 - Model config: edit `configs/model_config.py`. In our experiments:
 
     - Parameters of the `OptimalTransport` stay always the same;
     - `BATCHNORM` can be `ConventionalBatchNorm` or `TransductiveBatchNorm`;
     - `BACKBONE` is `Conv4` for CIFAR and FEMNIST, `ResNet18` for miniImageNet;
-    - `MODEL` is where you choose the FSL method;
+    - `MODEL` is where you choose the FSL method:
+      - Select the method (`MatchingNet`, `ProtoNet`, `TransPropNet`, `TransFineTune`)
       - Set the `transportation` parameter to `None` in order to not use OT.
-  ...
+  
+- Evaluation config: edit `configs/evaluation_config.py` to change the size and number of evaluation tasks.
+Set `SUPPORT_QUERY_SHIFT` to False in order to sample tasks where source and target domains are the same.
+  
+- Training config specifically for standard ERM training: edit `configs/erm_training_config.py`. 
+  We adapt the number of epochs and number of images per epoch to ensure that two models respectively trained
+  with episodic training and standard ERM training roughly see the same number of images.
+  
+- Finally, edit `configs/experiment_config.py` to change general settings of your experiment (mostly the random seed and output directory).
