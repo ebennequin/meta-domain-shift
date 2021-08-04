@@ -184,8 +184,6 @@ class MAP(AbstractMetaLearner):
 
         ndatas = centerDatas(ndatas, n_lsamples)
 
-        print("size of the datas...", ndatas.size())
-
         # switch to cuda
         ndatas = ndatas.cuda()
         labels = labels.cuda()
@@ -236,7 +234,7 @@ class MAP(AbstractMetaLearner):
     def loop(self, model, n_epochs=20):
         self.probas = model.getProbas(self.ndatas, self.labels)
 
-        for epoch in tqdm(range(1, n_epochs + 1)):
+        for epoch in range(1, n_epochs + 1):
             self.performEpoch(model, epochInfo=(epoch, n_epochs))
 
         # get final accuracy and return it
