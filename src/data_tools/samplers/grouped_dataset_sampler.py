@@ -35,8 +35,12 @@ class GroupedDatasetSampler(Sampler):
         self.eligible_pairs_no_shift = self.user_class_occurrences[
             ["user", "class_name"]
         ].loc[self.user_class_occurrences.n_images >= n_source + n_target]
-        domains_are_eligible_no_shift = self.eligible_pairs_no_shift.user.value_counts(sort=False).gt(n_way)
-        self.eligible_domains_no_shift = domains_are_eligible_no_shift.index[domains_are_eligible_no_shift]
+        domains_are_eligible_no_shift = self.eligible_pairs_no_shift.user.value_counts(
+            sort=False
+        ).gt(n_way)
+        self.eligible_domains_no_shift = domains_are_eligible_no_shift.index[
+            domains_are_eligible_no_shift
+        ]
 
     def __len__(self):
         return self.n_episodes
@@ -98,13 +102,21 @@ class GroupedDatasetSampler(Sampler):
 
         else:
             domain = np.random.choice(self.eligible_domains_no_shift, 1)[0]
-            labels = np.random.choice(self.eligible_pairs_no_shift.class_name.loc[self.eligible_pairs_no_shift.user == domain], self.n_way, replace=False)
-            sampled_items = torch.stack([
-                self._sample_instances(label, domain, self.n_source + self.n_target)
-                for label in labels
-            ])
-            source_items = sampled_items[:, :self.n_source].flatten()
-            target_items = sampled_items[:, self.n_source:].flatten()
+            labels = np.random.choice(
+                self.eligible_pairs_no_shift.class_name.loc[
+                    self.eligible_pairs_no_shift.user == domain
+                ],
+                self.n_way,
+                replace=False,
+            )
+            sampled_items = torch.stack(
+                [
+                    self._sample_instances(label, domain, self.n_source + self.n_target)
+                    for label in labels
+                ]
+            )
+            source_items = sampled_items[:, : self.n_source].flatten()
+            target_items = sampled_items[:, self.n_source :].flatten()
 
         return torch.cat((source_items, target_items))
 
